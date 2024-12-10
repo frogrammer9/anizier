@@ -1,0 +1,32 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-Iinclude",
+      "-c",
+      "-o",
+      "obj/app.o",
+      "src/app.c"
+    ],
+    "directory": "/home/oskar/Dev/alnumK2",
+    "file": "/home/oskar/Dev/alnumK2/src/app.c",
+    "output": "/home/oskar/Dev/alnumK2/obj/app.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-Iinclude",
+      "-c",
+      "-o",
+      "obj/main.o",
+      "src/main.c"
+    ],
+    "directory": "/home/oskar/Dev/alnumK2",
+    "file": "/home/oskar/Dev/alnumK2/src/main.c",
+    "output": "/home/oskar/Dev/alnumK2/obj/main.o"
+  }
+]
