@@ -10,7 +10,7 @@ SOURCES = $(wildcard $(SRCDIR)/*.c)
 OBJDIR = obj
 OBJECTS = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SOURCES))
 
-TARGET = bezier_editor
+TARGET = anizier
 
 all: $(TARGET)
 
