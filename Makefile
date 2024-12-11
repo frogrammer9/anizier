@@ -14,7 +14,7 @@ TARGET = anizier
 
 all: $(TARGET)
 
-$(TARGET): $(OBJECTS)
+$(TARGET): clean $(OBJECTS)
 	@echo "Linking..."
 	$(CC) $(OBJECTS) -o $(TARGET) $(LDFLAGS)
 
@@ -34,5 +34,8 @@ run: all
 	@./$(TARGET)
 	@echo "Program exited with code $$?"
 
-.PHONY: all clean run
+gdb: all
+	@gdb $(TARGET)
+
+.PHONY: all clean run gdb
 
