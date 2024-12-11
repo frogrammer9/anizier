@@ -18,4 +18,40 @@ typedef double f64;
 
 typedef const char* cstr;
 
+typedef struct {
+	f32 x, y;
+} vec2;
+
+typedef struct {
+	f32 x, y, z;
+} vec3;
+
+typedef struct {
+	f32 x, y, z, w;
+} vec4;
+
+typedef struct {
+	i32 x, y;
+} ivec2;
+
+typedef struct {
+	i32 x, y, z;
+} ivec3;
+
+typedef struct {
+	i32 x, y, z, w;
+} ivec4;
+
+typedef struct {
+	u32 x, y;
+} uvec2;
+
+typedef struct {
+	u32 x, y, z;
+} uvec3;
+
+typedef struct {
+	u32 x, y, z, w;
+} uvec4;
+
 #endif
