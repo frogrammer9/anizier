@@ -2,6 +2,11 @@
 #include <GL/glew.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+void generate_bezier_samples(controlPoint* cps, u32 count, u32 sampleAmount, vec4* samplesOUT) {
+
+}
 
 void rnBuffer_init(rnBuffer* buff, bool dynamic) {
 	buff->VAO = 0; buff->VBO = 0; buff->EBO = 0;
@@ -59,16 +64,44 @@ void rnBuffer_alloc(rnBuffer* buff, u32 size) {
 	free(elementBuff);
 }
 
-u32 rnBuffer_add_curve(rnBuffer* buff, vec2* samples, u32 sampleAmount) {
-
+u32 rnBuffer_add_curve(rnBuffer* buff, vec4* samples, u32 sampleAmount) {
+	rnBuffer_alloc(buff, sampleAmount);
+	u64 offset = 0;
+	for(u32 i = 0; i < buff->size; ++i) offset += buff->samplesPerFrame[i];
+	glBindBuffer(GL_ARRAY_BUFFER, buff->VBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buff->EBO);
+	u32 curveID = buff->size;
+	glBufferSubData(GL_ARRAY_BUFFER, curveID * sizeof(vec4), sampleAmount * sizeof(vec4), samples);
+	buff->size += sampleAmount;
+	u32* elementBuff = malloc(sizeof(u32) * 2 * (sampleAmount - 1));
+	u32 val = 0;
+	for(u32 i = 0; i < sampleAmount; i += 2) {
+		elementBuff[i] = val++;
+		elementBuff[i + 1] = val;
+	}
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset * sizeof(vec4), 2 * (sampleAmount - 1) * sizeof(u32), elementBuff);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	buff->samplesPerFrame[buff->samplesSize] += sampleAmount;
+	free(elementBuff);
+	return curveID;
 }
 
-void rnBuffer_edit_curve(rnBuffer* buff, vec2* samples, u32 curveID) {
-
+void rnBuffer_edit_curve(rnBuffer* buff, vec4* samples, u32 sampleAmount, u32 curveID) {
+	glBindBuffer(GL_ARRAY_BUFFER, buff->VBO);
+	glBufferSubData(GL_ARRAY_BUFFER, curveID, sampleAmount * sizeof(vec4), samples);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void rnBuffer_new_frame(rnBuffer* buff) {
-
+	buff->samplesSize++;
+	if(buff->samplesSize == buff->samplesMaxSize) {
+		u32* newArr = calloc(buff->samplesMaxSize * 2, sizeof(u32));
+		buff->samplesMaxSize *= 2;
+		memcpy(newArr, buff->samplesPerFrame, buff->size * sizeof(u32));
+		free(buff->samplesPerFrame);
+		buff->samplesPerFrame = newArr;
+	}
 }
 
 void rnBuffer_render(rnBuffer* buff, u32 frameID, u32 fps) {
@@ -85,3 +118,4 @@ void rnBuffer_render(rnBuffer* buff, u32 frameID, u32 fps) {
 	printf("Rendering all frames is not implemented yet bcoz multithreading in C is scary\n");
 	//TODO: Implement rendering xd 
 }
+
