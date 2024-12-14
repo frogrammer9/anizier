@@ -1,8 +1,8 @@
 CC = gcc
 
-CFLAGS = -Wall -Wextra -Iinclude -fsanitize=address -g
+CFLAGS = -Wall -Wextra -Iinclude 
 
-LDFLAGS = -Llib -lGLEW -lGL -lGLU -lm -lglfw -fsanitize=address 
+LDFLAGS = -Llib -lGLEW -lGL -lGLU -lm -lglfw 
 
 SRCDIR = src
 SOURCES = $(wildcard $(SRCDIR)/*.c)
