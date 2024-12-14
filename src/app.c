@@ -2,7 +2,7 @@
 #include "gui.h"
 #include "shader.h"
 #include "window.h"
-#include <GLFW/glfw3.h>
+#include "rendering.h"
 #include <stdio.h>
 
 int app_init(application_hndl* app) {
@@ -13,8 +13,22 @@ int app_init(application_hndl* app) {
 }
 
 int app_run(application_hndl* app) {
+
+	rnBuffer buff;
+	rnBuffer_init(&buff, true);
+	sample exap[3] = {
+		{.pos = {.x = 0.f, .y = 0.f}, .col = 0xaabbccff},
+		{.pos = {.x = 10.f, .y = 10.f}, .col = 0xaabbccff},
+		{.pos = {.x = 30.f, .y = 30.f}, .col = 0xaabbccff}
+	};
+	rnBuffer_add_curve(&buff, exap, 3);
+	rnBuffer_new_frame(&buff);
+
 	while(!glfwWindowShouldClose(app->window.win)) {
 
+		shader_bind(app->shader);
+		rnBuffer_render(&buff, 1, 30);
+		shader_bind(0);
 
 		GUI_NEW_FRAME(app->gui);
 		if(nk_begin(app->gui.ctx, "Menu", nk_rect(50, 50, 300, 400), NK_WINDOW_BORDER | NK_WINDOW_TITLE | NK_WINDOW_MOVABLE)) {
@@ -43,6 +57,7 @@ int app_run(application_hndl* app) {
 		window_FEP(&app->window);
 		glClear(GL_COLOR_BUFFER_BIT);
 	}
+	rnBuffer_terminate(&buff);
 	return 0;
 }
 

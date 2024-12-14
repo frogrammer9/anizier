@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void generate_bezier_samples(controlPoint* cps, u32 count, u32 sampleAmount, vec4* samplesOUT) {
+void generate_bezier_samples(controlPoint* cps, u32 count, u32 sampleAmount, sample* samplesOUT) {
 
 }
 
@@ -25,8 +25,8 @@ void rnBuffer_init(rnBuffer* buff, bool dynamic) {
 	glGenBuffers(1, &buff->VBO);
 	glBindBuffer(buff->VBO, GL_ARRAY_BUFFER);
 	glBufferData(GL_ARRAY_BUFFER, 0, NULL, (dynamic) ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec4), (void*)0); // vec2 position
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vec4), (void*)2); // vec2 color
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(sample), (void*)0); // vec2 position
+	glVertexAttribPointer(1, 1, GL_UNSIGNED_INT, GL_FALSE, sizeof(sample), (void*)2); // u32 color
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 
@@ -48,14 +48,14 @@ void rnBuffer_alloc(rnBuffer* buff, u32 size) {
 		buff->maxsize *= 2;
 	}
 
-	f32* vertexBuff = malloc(buff->size * 4 * sizeof(f32));
+	sample* vertexBuff = malloc(buff->size * sizeof(sample));
 	u32* elementBuff = malloc(buff->size * sizeof(u32));
 
 	glBindBuffer(GL_ARRAY_BUFFER, buff->VBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buff->EBO);
-	glGetBufferSubData(GL_ARRAY_BUFFER, 0, buff->size * 4 * sizeof(f32), vertexBuff);
+	glGetBufferSubData(GL_ARRAY_BUFFER, 0, buff->size * sizeof(sample), vertexBuff);
 	glGetBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, buff->size * sizeof(u32), elementBuff);
-	glBufferData(GL_ARRAY_BUFFER, buff->maxsize * 4 * sizeof(f32), vertexBuff, (buff->dynamic) ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, buff->maxsize * sizeof(sample), vertexBuff, (buff->dynamic) ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, buff->maxsize * sizeof(u32), elementBuff, (buff->dynamic) ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -64,14 +64,14 @@ void rnBuffer_alloc(rnBuffer* buff, u32 size) {
 	free(elementBuff);
 }
 
-u32 rnBuffer_add_curve(rnBuffer* buff, vec4* samples, u32 sampleAmount) {
+u32 rnBuffer_add_curve(rnBuffer* buff, sample* samples, u32 sampleAmount) {
 	rnBuffer_alloc(buff, sampleAmount);
 	u64 offset = 0;
 	for(u32 i = 0; i < buff->size; ++i) offset += buff->samplesPerFrame[i];
 	glBindBuffer(GL_ARRAY_BUFFER, buff->VBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buff->EBO);
 	u32 curveID = buff->size;
-	glBufferSubData(GL_ARRAY_BUFFER, curveID * sizeof(vec4), sampleAmount * sizeof(vec4), samples);
+	glBufferSubData(GL_ARRAY_BUFFER, curveID * sizeof(sample), sampleAmount * sizeof(sample), samples);
 	buff->size += sampleAmount;
 	u32* elementBuff = malloc(sizeof(u32) * 2 * (sampleAmount - 1));
 	u32 val = 0;
@@ -79,7 +79,7 @@ u32 rnBuffer_add_curve(rnBuffer* buff, vec4* samples, u32 sampleAmount) {
 		elementBuff[i] = val++;
 		elementBuff[i + 1] = val;
 	}
-	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset * sizeof(vec4), 2 * (sampleAmount - 1) * sizeof(u32), elementBuff);
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset * sizeof(sample), 2 * (sampleAmount - 1) * sizeof(u32), elementBuff);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	buff->samplesPerFrame[buff->samplesSize] += sampleAmount;
@@ -87,9 +87,9 @@ u32 rnBuffer_add_curve(rnBuffer* buff, vec4* samples, u32 sampleAmount) {
 	return curveID;
 }
 
-void rnBuffer_edit_curve(rnBuffer* buff, vec4* samples, u32 sampleAmount, u32 curveID) {
+void rnBuffer_edit_curve(rnBuffer* buff, sample* samples, u32 sampleAmount, u32 curveID) {
 	glBindBuffer(GL_ARRAY_BUFFER, buff->VBO);
-	glBufferSubData(GL_ARRAY_BUFFER, curveID, sampleAmount * sizeof(vec4), samples);
+	glBufferSubData(GL_ARRAY_BUFFER, curveID, sampleAmount * sizeof(sample), samples);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 

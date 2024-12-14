@@ -19,9 +19,14 @@ typedef struct {
 	f32 weight;
 } controlPoint;
 
-void generate_bezier_samples(controlPoint* cps, u32 count, u32 sampleAmount, vec4* samplesOUT);
-u32 rnBuffer_add_curve(rnBuffer* buff, vec4* samples, u32 sampleAmount);
-void rnBuffer_edit_curve(rnBuffer* buff, vec4* samples, u32 sampleAmount, u32 curveID);
+typedef struct {
+	vec2 pos;
+	u32 col;
+} sample;
+
+void generate_bezier_samples(controlPoint* cps, u32 count, u32 sampleAmount, sample* samplesOUT);
+u32 rnBuffer_add_curve(rnBuffer* buff, sample* samples, u32 sampleAmount);
+void rnBuffer_edit_curve(rnBuffer* buff, sample* samples, u32 sampleAmount, u32 curveID);
 void rnBuffer_new_frame(rnBuffer* buff);
 void rnBuffer_init(rnBuffer* buff, bool dynamic);
 void rnBuffer_terminate(rnBuffer* buff);
