@@ -3,10 +3,12 @@
 
 #include "gui.h"
 #include "window.h"
+#include "shader.h"
 
 typedef struct {
 	gui_hndl gui;
 	window_hndl window;
+	shaderID shader;
 } application_hndl;
 
 int app_init(application_hndl* app);

@@ -1,5 +1,6 @@
 #include "app.h"
 #include "gui.h"
+#include "shader.h"
 #include "window.h"
 #include <GLFW/glfw3.h>
 #include <stdio.h>
@@ -7,6 +8,7 @@
 int app_init(application_hndl* app) {
 	if(window_init(&app->window, 640, 480, "Anizier")) return 1;
 	if(gui_init(&app->gui, &app->window)) return 1;
+	app->shader = shader_init("basic.glsl"); //If this fails it calls exit(1)
 	return 0;
 }
 
@@ -45,6 +47,7 @@ int app_run(application_hndl* app) {
 }
 
 void app_terminate(application_hndl* app) {
+	shader_terminate(&app->shader);
 	gui_terminate(&app->gui);
 	window_terminate(&app->window);
 }

@@ -2,6 +2,7 @@
 #include <GL/glew.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 
 static uint32_t compileShader(cstr src, GLenum shaderType) {	
@@ -24,7 +25,7 @@ static uint32_t compileShader(cstr src, GLenum shaderType) {
 }
 
 static uint32_t linkShader(uint32_t vertexID, uint32_t fragmentID) {
-	const uint32_t shaderID = glCreateProgram();
+	uint32_t shaderID = glCreateProgram();
 
 	glAttachShader(shaderID, vertexID);
 	glAttachShader(shaderID, fragmentID);
@@ -48,38 +49,68 @@ static uint32_t linkShader(uint32_t vertexID, uint32_t fragmentID) {
 }
 
 shaderID shader_init(cstr src) {
-	shaderFile.open(FilePath);
-	if (!shaderFile.is_open()) { std::cout << "Couldn't open shader file. Path: " << FilePath; exit(404); }
-	shaderType currType = none;
-	std::string currLine;
-	std::array<std::string, none> shaderSrc;
-	//reading from a shader file
-	while (std::getline(shaderFile, currLine)) {
-		if (currLine.find("#shader") != std::string::npos)
-		{
-			if (currLine.find(" vertex") != std::string::npos) currType = vertex;
-			else if (currLine.find(" fragment") != std::string::npos) currType = fragment;
+	FILE* shaderSrc = fopen(src, "r");
+	if(!shaderSrc) {
+		printf("Failed to open shader file %s\n", src);
+		exit(1);
+	}
+	fseek(shaderSrc, 0, SEEK_END);
+	u32 fileSize = ftell(shaderSrc);
+	fseek(shaderSrc, 0, SEEK_SET);
+	char* line = NULL;
+	size_t len = 0;
+	ssize_t read = 0;
+	GLenum currType;
+	char* vertexSrc = calloc(fileSize + 1, sizeof(char));
+	u32 vertexSrcInx = 0;
+	char* fragmentSrc = calloc(fileSize + 1, sizeof(char));
+	u32 fragmentSrcInx = 0;
+
+	while ((read = getline(&line, &len, shaderSrc)) != -1) {
+		if (strstr(line, "#shader vertex")) {
+			currType = GL_VERTEX_SHADER;
 			continue;
 		}
-		if (currType == none) continue;
-		 shaderSrc.at(currType) += currLine + "\n"; 
+		else if(strstr(line, "#shader fragment")) {
+			currType = GL_FRAGMENT_SHADER;
+			continue;
+		}
+		switch(currType) {
+			default: continue;
+			case GL_VERTEX_SHADER: 
+				memcpy(&vertexSrc[vertexSrcInx], line, read);
+				vertexSrcInx += read;
+			break;
+			case GL_FRAGMENT_SHADER: 
+				memcpy(&fragmentSrc[fragmentSrcInx], line, read);
+				fragmentSrcInx += read;
+			break;
+		}
 	}
-	//compiling and linking shader program
-	const uint32_t vertexID = compileShader(vertex, shaderSrc[vertex].c_str());
-	const uint32_t fragmentID = compileShader(fragment, shaderSrc[fragment].c_str());
+
+	free(line);
+	fclose(shaderSrc);
+
+	const uint32_t vertexID = compileShader(vertexSrc, GL_VERTEX_SHADER);
+	const uint32_t fragmentID = compileShader(fragmentSrc, GL_FRAGMENT_SHADER);
+
+	free(vertexSrc);
+	free(fragmentSrc);
 	
-	m_ID = linkShader(vertexID, fragmentID, geometryID, computeID, tessControlID, tessEvalID);
+	shaderID id = linkShader(vertexID, fragmentID);
 	glDeleteShader(vertexID);
 	glDeleteShader(fragmentID);
 
-	if(0 == m_ID) printf("Crating a shader at path: %s failes\n", src);
+	if(0 == id) printf("Crating a shader at path: %s failed\n", src);
+	return id;
 }
 
 
-void shader_terminate() {
-
+void shader_terminate(shaderID* id) {
+	if(*id) glDeleteProgram(*id);
+	*id = 0;
 }
 
-void shader_bind(shaderID) {
-
+void shader_bind(shaderID id) {
+	glUseProgram(id);
 }
