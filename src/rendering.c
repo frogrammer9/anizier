@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define DEBUG 1
+#define DEBUG 0
 
 #define S2ES(size) ((size) ? (2 * (size - 1)) : (0)) //Calculates the amount of indexes based on the vertex count
 
@@ -19,16 +19,17 @@ void rnBuffer_init(rnBuffer* buff, bool dynamic) {
 	buff->elementsPerFrame = NULL; buff->samplesInxEnd = 0; buff->samplesMaxSize = 64;
 	buff->frameCount = 0;
 	buff->dynamic = dynamic;
+	buff->elementVal = 0;
 
 	glGenVertexArrays(1, &buff->VAO);
 	glBindVertexArray(buff->VAO);
 
 	glGenBuffers(1, &buff->EBO);
-	glBindBuffer(buff->EBO, GL_ELEMENT_ARRAY_BUFFER);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buff->EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 0, NULL, (dynamic) ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
 
 	glGenBuffers(1, &buff->VBO);
-	glBindBuffer(buff->VBO, GL_ARRAY_BUFFER);
+	glBindBuffer(GL_ARRAY_BUFFER, buff->VBO);
 	glBufferData(GL_ARRAY_BUFFER, 0, NULL, (dynamic) ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(sample), (void*)0); // vec2 position
 	glVertexAttribPointer(1, 1, GL_UNSIGNED_INT, GL_FALSE, sizeof(sample), (void*)(2 * sizeof(f32))); // u32 color
@@ -87,11 +88,11 @@ u32 rnBuffer_add_curve(rnBuffer* buff, sample* samples, u32 sampleAmount) {
 	glBufferSubData(GL_ARRAY_BUFFER, curveID * sizeof(sample), sampleAmount * sizeof(sample), samples);
 	buff->size += sampleAmount;
 	u32* elementBuff = malloc(S2ES(sampleAmount) * sizeof(u32));
-	u32 val = 0;
 	for(u32 i = 0; i < sampleAmount - 1; ++i) { //PERF: This could be generated once and sampled (regenerated if a larger line draw request happens)
-		elementBuff[2 * i] = val++;
-		elementBuff[2 * i + 1] = val;
+		elementBuff[2 * i] = buff->elementVal++;
+		elementBuff[2 * i + 1] = buff->elementVal;
 	}
+	buff->elementVal++;
 	u32 elementOffset = 0;
 	for(u32 i = 0; i <= buff->samplesInxEnd; ++i) elementOffset += buff->elementsPerFrame[i];
 	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, elementOffset * sizeof(u32), S2ES(sampleAmount) * sizeof(u32), elementBuff);

@@ -3,12 +3,16 @@
 #include "shader.h"
 #include "window.h"
 #include "rendering.h"
+#include <GLFW/glfw3.h>
 #include <stdio.h>
+
+int shaderWinSizeUniLoc = 0;
 
 int app_init(application_hndl* app) {
 	if(window_init(&app->window, 640, 480, "Anizier")) return 1;
 	if(gui_init(&app->gui, &app->window)) return 1;
 	app->shader = shader_init("basic.glsl"); //If this fails it calls exit(1)
+	shaderWinSizeUniLoc = glGetUniformLocation(app->shader, "uWinSize");
 	return 0;
 }
 
@@ -25,14 +29,29 @@ int app_run(application_hndl* app) {
 		{.pos = {.x = 21.f, .y = 37.f}, .col = 0xaabbccff},
 		{.pos = {.x = 11.f, .y = 22.f}, .col = 0xaabbccff},
 	};
-	rnBuffer_add_curve(&buff, l1, 3);
+	sample l3[3] = {
+		{.pos = {.x = -2.f, .y = -2.f}, .col = 0xaabbccff},
+		{.pos = {.x = -15.f, .y = 100.f}, .col = 0xaabbccff},
+		{.pos = {.x = -300.f, .y = -250.f}, .col = 0xaabbccff}
+	};
+	u32 l1id = rnBuffer_add_curve(&buff, l1, 3);
 	rnBuffer_add_curve(&buff, l2, 2);
-	rnBuffer_add_curve(&buff, l1, 3);
 	rnBuffer_new_frame(&buff);
+
+	int WinSw, WinSh;
 
 	while(!glfwWindowShouldClose(app->window.win)) {
 
+		shader_bind(app->shader);
+		glfwGetWindowSize(app->window.win, &WinSw, &WinSh);
+		glUniform2f(shaderWinSizeUniLoc, WinSw, WinSh);
+		shader_bind(0);
+
 		rnBuffer_render(&buff, app->shader, 1, 30);
+
+		l1[1].pos.x = 2 * (app->gui.ctx->input.mouse.pos.x - WinSw / 2.f);
+		l1[1].pos.y = 2 * (-app->gui.ctx->input.mouse.pos.y + WinSh / 2.f);
+		rnBuffer_edit_curve(&buff, l1, 3, l1id);
 
 		GUI_NEW_FRAME(app->gui);
 		if(nk_begin(app->gui.ctx, "Menu", nk_rect(50, 50, 300, 400), NK_WINDOW_BORDER | NK_WINDOW_TITLE | NK_WINDOW_MOVABLE)) {

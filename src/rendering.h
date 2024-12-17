@@ -9,7 +9,7 @@ typedef struct {
 	u64 size;
 	u64 maxsize;
 	u32* elementsPerFrame;
-	u32 currOffset;
+	u32 elementVal;
 	u32 samplesInxEnd;
 	u32 samplesMaxSize;
 	u32 frameCount;
