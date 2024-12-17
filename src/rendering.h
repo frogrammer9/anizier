@@ -2,12 +2,14 @@
 #define RENDERING_H
 
 #include "altype.h"
+#include "shader.h"
 
 typedef struct {
 	u32 VAO, VBO, EBO;
 	u64 size;
 	u64 maxsize;
-	u32* samplesPerFrame;
+	u32* elementsPerFrame;
+	u32 currOffset;
 	u32 samplesInxEnd;
 	u32 samplesMaxSize;
 	u32 frameCount;
@@ -31,6 +33,6 @@ void rnBuffer_new_frame(rnBuffer* buff);
 void rnBuffer_init(rnBuffer* buff, bool dynamic);
 void rnBuffer_terminate(rnBuffer* buff);
 void rnBuffer_alloc(rnBuffer* buff, u32 size); // Make sure that there is a place for at least "size" elements in the buffer
-void rnBuffer_render(rnBuffer* buff, u32 frameID, u32 fps); // If frameID == 0 render all frames else fps is ignored
+void rnBuffer_render(rnBuffer* buff, shaderID shader, u32 frameID, u32 fps); // If frameID == 0 render all frames else fps is ignored
 
 #endif

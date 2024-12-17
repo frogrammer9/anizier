@@ -16,19 +16,23 @@ int app_run(application_hndl* app) {
 
 	rnBuffer buff;
 	rnBuffer_init(&buff, true);
-	sample exap[3] = {
+	sample l1[3] = {
 		{.pos = {.x = 0.f, .y = 0.f}, .col = 0xaabbccff},
 		{.pos = {.x = 10.f, .y = 10.f}, .col = 0xaabbccff},
 		{.pos = {.x = 30.f, .y = 30.f}, .col = 0xaabbccff}
 	};
-	rnBuffer_add_curve(&buff, exap, 3);
+	sample l2[3] = {
+		{.pos = {.x = 21.f, .y = 37.f}, .col = 0xaabbccff},
+		{.pos = {.x = 11.f, .y = 22.f}, .col = 0xaabbccff},
+	};
+	rnBuffer_add_curve(&buff, l1, 3);
+	rnBuffer_add_curve(&buff, l2, 2);
+	rnBuffer_add_curve(&buff, l1, 3);
 	rnBuffer_new_frame(&buff);
 
 	while(!glfwWindowShouldClose(app->window.win)) {
 
-		shader_bind(app->shader);
-		rnBuffer_render(&buff, 1, 30);
-		shader_bind(0);
+		rnBuffer_render(&buff, app->shader, 1, 30);
 
 		GUI_NEW_FRAME(app->gui);
 		if(nk_begin(app->gui.ctx, "Menu", nk_rect(50, 50, 300, 400), NK_WINDOW_BORDER | NK_WINDOW_TITLE | NK_WINDOW_MOVABLE)) {

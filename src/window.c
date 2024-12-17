@@ -2,7 +2,6 @@
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 #include "window.h"
-#include "gui.h"
 
 int window_init(window_hndl* win, int width, int height, const char* name) {
 	if(!glfwInit()) {
