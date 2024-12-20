@@ -2,6 +2,7 @@
 #define APP_H
 
 #include "gui.h"
+#include "rendering.h"
 #include "window.h"
 #include "shader.h"
 #include "altype.h"
@@ -10,6 +11,7 @@ typedef struct {
 	gui_hndl gui;
 	window_hndl window;
 	shaderID shader;
+	rnBuffer buffer;
 } application_hndl;
 
 int app_init(application_hndl* app);
