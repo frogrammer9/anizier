@@ -29,7 +29,7 @@ typedef struct {
 void generate_bezier_samples(controlPoint* cps, u32 count, u32 sampleAmount, sample* samplesOUT);
 u32 rnBuffer_add_curve(rnBuffer* buff, sample* samples, u32 sampleAmount);
 void rnBuffer_edit_curve(rnBuffer* buff, sample* samples, u32 sampleAmount, u32 curveID);
-void rnBuffer_new_frame(rnBuffer* buff);
+u32 rnBuffer_new_frame(rnBuffer* buff);
 void rnBuffer_init(rnBuffer* buff, bool dynamic);
 void rnBuffer_terminate(rnBuffer* buff);
 void rnBuffer_alloc(rnBuffer* buff, u32 size); // Make sure that there is a place for at least "size" elements in the buffer

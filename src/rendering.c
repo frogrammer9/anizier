@@ -4,13 +4,56 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #define DEBUG 0
 
 #define S2ES(size) ((size) ? (2 * (size - 1)) : (0)) //Calculates the amount of indexes based on the vertex count
 
-void generate_bezier_samples(controlPoint* cps, u32 count, u32 sampleAmount, sample* samplesOUT) {
+static u64 factorial(u64 in) {
+	static u64* cashe = NULL;
+	static u64 cashe_size = 0;
+	if(cashe == NULL) {
+		cashe = malloc(2 * sizeof(u64));
+		cashe_size = 2;
+		cashe[0] = 1;
+		cashe[1] = 1;
+	}
+	if(in < cashe_size) return cashe[in];
+	cashe = realloc(cashe, (in + 1) * sizeof(u64));
+	u64 old_cash_size = cashe_size;
+	cashe_size = in + 1;
+	for(; old_cash_size <= in; ++old_cash_size) cashe[old_cash_size] = old_cash_size * cashe[old_cash_size - 1];
+	return cashe[in];
+}
 
+static u64 binomialCoefficient(u64 n, u64 i) {
+	return factorial(n) / (factorial(i) * factorial(n - i));
+}
+
+static f64 bernsteinPolinomial(u64 n, u64 i, f32 t) {
+	return binomialCoefficient(n, i) * pow(1 - t, n - i) * pow(t, i);
+}
+
+void generate_bezier_samples(controlPoint* cps, u32 count, u32 sampleAmount, sample* samplesOUT) {
+	f32 t = 0.f;
+	sample point;
+	point.col = 0x0000ffff;
+	for(u32 k = 0; k < sampleAmount; ++k) {
+		point.pos.x = 0.f;
+		point.pos.y = 0.f;
+		f32 weight = 0.f;
+		t = (f32)k / (sampleAmount - 1);
+		for(u32 i = 0; i < count; ++i) {
+			float bern = bernsteinPolinomial(count - 1, i, t);
+			point.pos.x += bern * cps[i].point.x * cps[i].weight;
+			point.pos.y += bern * cps[i].point.y * cps[i].weight;
+			weight += bern * cps[i].weight;
+		}
+		point.pos.x /= weight;
+		point.pos.y /= weight;
+		samplesOUT[k] = point;
+	}
 }
 
 void rnBuffer_init(rnBuffer* buff, bool dynamic) {
@@ -48,9 +91,9 @@ void rnBuffer_terminate(rnBuffer* buff) {
 }
 
 void rnBuffer_alloc(rnBuffer* buff, u32 size) {
-	if(buff->maxsize > size) return;
+	if(buff->maxsize > buff->size + size) return;
 	if(buff->maxsize == 0)	buff->maxsize = 128;
-	while(buff->maxsize < size) {
+	while(buff->maxsize < buff->size + size) {
 		buff->maxsize *= 2;
 	}
 
@@ -70,8 +113,8 @@ void rnBuffer_alloc(rnBuffer* buff, u32 size) {
 	glBufferData(GL_ARRAY_BUFFER, buff->maxsize * sizeof(sample), NULL, (buff->dynamic) ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, S2ES(buff->maxsize) * sizeof(u32), NULL, (buff->dynamic) ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
 
-	glBufferSubData(GL_ARRAY_BUFFER, 0, buff->size, vertexBuff);
-	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, S2ES(buff->size), elementBuff);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, buff->size * sizeof(sample), vertexBuff);
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, S2ES(buff->size) * sizeof(u32), elementBuff);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -89,10 +132,10 @@ u32 rnBuffer_add_curve(rnBuffer* buff, sample* samples, u32 sampleAmount) {
 	buff->size += sampleAmount;
 	u32* elementBuff = malloc(S2ES(sampleAmount) * sizeof(u32));
 	for(u32 i = 0; i < sampleAmount - 1; ++i) { //PERF: This could be generated once and sampled (regenerated if a larger line draw request happens)
-		elementBuff[2 * i] = buff->elementVal++;
-		elementBuff[2 * i + 1] = buff->elementVal;
+		elementBuff[2 * i] = buff->elementVal;
+		elementBuff[2 * i + 1] = ++buff->elementVal;
 	}
-	buff->elementVal++;
+	++buff->elementVal;
 	u32 elementOffset = 0;
 	for(u32 i = 0; i <= buff->samplesInxEnd; ++i) elementOffset += buff->elementsPerFrame[i];
 	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, elementOffset * sizeof(u32), S2ES(sampleAmount) * sizeof(u32), elementBuff);
@@ -105,49 +148,56 @@ u32 rnBuffer_add_curve(rnBuffer* buff, sample* samples, u32 sampleAmount) {
 
 void rnBuffer_edit_curve(rnBuffer* buff, sample* samples, u32 sampleAmount, u32 curveID) {
 	glBindBuffer(GL_ARRAY_BUFFER, buff->VBO);
-	glBufferSubData(GL_ARRAY_BUFFER, curveID, sampleAmount * sizeof(sample), samples);
+	glBufferSubData(GL_ARRAY_BUFFER, curveID * sizeof(sample), sampleAmount * sizeof(sample), samples);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void rnBuffer_new_frame(rnBuffer* buff) {
+u32 rnBuffer_new_frame(rnBuffer* buff) {
 	buff->samplesInxEnd++;
 	if(buff->samplesInxEnd == buff->samplesMaxSize) {
-		u32* newArr = calloc(buff->samplesMaxSize * 2, sizeof(u32)); //TODO: change to realloc
+		buff->elementsPerFrame = realloc(buff->elementsPerFrame, buff->samplesMaxSize * 2 * sizeof(u32));
 		buff->samplesMaxSize *= 2;
-		memcpy(newArr, buff->elementsPerFrame, (buff->samplesInxEnd + 1) * sizeof(u32));
-		free(buff->elementsPerFrame);
-		buff->elementsPerFrame = newArr;
 	}
+	return buff->samplesInxEnd;
 }
 
 void rnBuffer_render(rnBuffer* buff, shaderID shader, u32 frameID, u32 fps) {
 	#if DEBUG == 1
-	sample* vBuff = malloc(buff->size * sizeof(sample));
-	u32* eBuff = malloc(S2ES(buff->size) * sizeof(u32));
-	GLsizei vBuffS = 0;
-	GLsizei eBuffS = 0;
-	glBindBuffer(GL_ARRAY_BUFFER, buff->VBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buff->EBO);
-	glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &vBuffS);
-	glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &eBuffS);
-	glGetBufferSubData(GL_ARRAY_BUFFER, 0, buff->size * sizeof(sample), vBuff);
-	glGetBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, S2ES(buff->size) * sizeof(u32), eBuff);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	printf("Vertex size: %lu. Element size: %lu\n", vBuffS / sizeof(sample), eBuffS / sizeof(u32));
-	for(u32 i = 0; i < buff->size; ++i) printf("Vertex: pos: {%f, %f}, color: %x\n", vBuff[i].pos.x, vBuff[i].pos.y, vBuff[i].col);
-	for(u32 i = 0; i < buff->size - 1 && 2 * i < buff->elementsPerFrame[frameID - 1]; ++i) printf("Element: %u, %u\n", eBuff[2 * i], eBuff[2 * i + 1]);
-	printf("Elements to be rendered: %u\n", buff->elementsPerFrame[frameID - 1]);
-	free(vBuff);
-	free(eBuff);
+	static u32 lastframe;
+	if(frameID != lastframe) {
+		sample* vBuff = malloc(buff->size * sizeof(sample));
+		u32* eBuff = malloc(S2ES(buff->size) * sizeof(u32));
+		GLsizei vBuffS = 0;
+		GLsizei eBuffS = 0;
+		glBindBuffer(GL_ARRAY_BUFFER, buff->VBO);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buff->EBO);
+		glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &vBuffS);
+		glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &eBuffS);
+		glGetBufferSubData(GL_ARRAY_BUFFER, 0, buff->size * sizeof(sample), vBuff);
+		glGetBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, S2ES(buff->size) * sizeof(u32), eBuff);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		printf("Vertex size: %lu. Element size: %lu\n", vBuffS / sizeof(sample), eBuffS / sizeof(u32));
+		for(u32 i = 0; i < buff->size; ++i) printf("Vertex: pos: {%f, %f}, color: 0x%08x\n", vBuff[i].pos.x, vBuff[i].pos.y, vBuff[i].col);
+		u32 elementOffset = 0;
+		for(u32 i = 0; i < frameID - 1; ++i) elementOffset += buff->elementsPerFrame[i];
+		for(u32 i = 0; i < buff->elementsPerFrame[frameID - 1]; i += 2) printf("Element: %u, %u\n", eBuff[elementOffset + i], eBuff[elementOffset + i + 1]);
+		printf("Elements to be rendered: %u\n", buff->elementsPerFrame[frameID - 1]);
+		printf("Offset: %u\n", elementOffset);
+		free(vBuff);
+		free(eBuff);
+	}
+	lastframe = frameID;
 	#endif
+
+
 	if(frameID) {
 		u64 offset = 0;
 		for(u32 i = 0; i < frameID - 1; ++i) { offset += buff->elementsPerFrame[i]; }
 		glBindVertexArray(buff->VAO);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buff->EBO);
 		shader_bind(shader);
-		glDrawElements(GL_LINES, buff->elementsPerFrame[frameID - 1], GL_UNSIGNED_INT, (void*)offset);
+		glDrawElements(GL_LINES, buff->elementsPerFrame[frameID - 1], GL_UNSIGNED_INT, (void*)(offset * sizeof(u32)));
 		shader_bind(0);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);

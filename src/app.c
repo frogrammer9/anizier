@@ -5,8 +5,14 @@
 #include "rendering.h"
 #include <GLFW/glfw3.h>
 #include <stdio.h>
+#include <time.h>
+#include <stdlib.h>
 
 int shaderWinSizeUniLoc = 0;
+
+static f32 randf(f32 min, f32 max) {
+	return min + (f32)rand() / (f32)RAND_MAX * (max - min);
+}
 
 int app_init(application_hndl* app) {
 	if(window_init(&app->window, 640, 480, "Anizier")) return 1;
@@ -20,22 +26,65 @@ int app_run(application_hndl* app) {
 
 	rnBuffer buff;
 	rnBuffer_init(&buff, true);
-	sample l1[3] = {
-		{.pos = {.x = 0.f, .y = 0.f}, .col = 0xaabbccff},
-		{.pos = {.x = 10.f, .y = 10.f}, .col = 0xaabbccff},
-		{.pos = {.x = 30.f, .y = 30.f}, .col = 0xaabbccff}
-	};
-	sample l2[3] = {
-		{.pos = {.x = 21.f, .y = 37.f}, .col = 0xaabbccff},
-		{.pos = {.x = 11.f, .y = 22.f}, .col = 0xaabbccff},
-	};
-	sample l3[3] = {
-		{.pos = {.x = -2.f, .y = -2.f}, .col = 0xaabbccff},
-		{.pos = {.x = -15.f, .y = 100.f}, .col = 0xaabbccff},
-		{.pos = {.x = -300.f, .y = -250.f}, .col = 0xaabbccff}
-	};
-	u32 l1id = rnBuffer_add_curve(&buff, l1, 3);
-	rnBuffer_add_curve(&buff, l2, 2);
+
+	#define amount 20
+	
+	sample l1s[amount];
+	controlPoint l1[amount];
+	sample s;
+	controlPoint cp;
+	s.col = 0xff0000ff;
+	for(u32 i = 0; i < amount; ++i) {
+		f32 fx = randf(-400.f, 400.f);
+		f32 fy = randf(-800.f, 800.f);
+		f32 fw = randf(0.f, 2.f);
+		s.pos.x = fx;
+		s.pos.y = fy;
+		cp.point.x = fx;
+		cp.point.y = fy;
+		cp.weight = fw;
+		l1s[i] = s;
+		l1[i] = cp;
+	}
+
+	sample curve[500];
+
+	generate_bezier_samples(l1, amount, 100, curve);
+	rnBuffer_add_curve(&buff, curve, 100);
+	u32 frame = rnBuffer_new_frame(&buff);
+
+	for(u32 i = 0; i < amount; ++i) {
+		f32 fx = randf(-400.f, 400.f);
+		f32 fy = randf(-800.f, 800.f);
+		f32 fw = randf(0.f, 2.f);
+		s.pos.x = fx;
+		s.pos.y = fy;
+		cp.point.x = fx;
+		cp.point.y = fy;
+		cp.weight = fw;
+		l1s[i] = s;
+		l1[i] = cp;
+	}
+
+	generate_bezier_samples(l1, amount, 100, curve);
+	rnBuffer_add_curve(&buff, curve, 100);
+	rnBuffer_new_frame(&buff);
+
+	for(u32 i = 0; i < amount; ++i) {
+		f32 fx = randf(-400.f, 400.f);
+		f32 fy = randf(-800.f, 800.f);
+		f32 fw = randf(0.f, 2.f);
+		s.pos.x = fx;
+		s.pos.y = fy;
+		cp.point.x = fx;
+		cp.point.y = fy;
+		cp.weight = fw;
+		l1s[i] = s;
+		l1[i] = cp;
+	}
+
+	generate_bezier_samples(l1, amount, 100, curve);
+	rnBuffer_add_curve(&buff, curve, 100);
 	rnBuffer_new_frame(&buff);
 
 	int WinSw, WinSh;
@@ -47,11 +96,12 @@ int app_run(application_hndl* app) {
 		glUniform2f(shaderWinSizeUniLoc, WinSw, WinSh);
 		shader_bind(0);
 
-		rnBuffer_render(&buff, app->shader, 1, 30);
+		vec2 pos = getMousePosGL(app);
 
-		l1[1].pos.x = 2 * (app->gui.ctx->input.mouse.pos.x - WinSw / 2.f);
-		l1[1].pos.y = 2 * (-app->gui.ctx->input.mouse.pos.y + WinSh / 2.f);
-		rnBuffer_edit_curve(&buff, l1, 3, l1id);
+		if(app->gui.ctx->input.keyboard.text[app->gui.ctx->input.keyboard.text_len - 1] == '+') frame++;
+		if(app->gui.ctx->input.keyboard.text[app->gui.ctx->input.keyboard.text_len - 1] == '-') frame--;
+
+		rnBuffer_render(&buff, app->shader, frame, 30);
 
 		GUI_NEW_FRAME(app->gui);
 		if(nk_begin(app->gui.ctx, "Menu", nk_rect(50, 50, 300, 400), NK_WINDOW_BORDER | NK_WINDOW_TITLE | NK_WINDOW_MOVABLE)) {
@@ -89,3 +139,20 @@ void app_terminate(application_hndl* app) {
 	gui_terminate(&app->gui);
 	window_terminate(&app->window);
 }
+
+vec2 getMousePosGL(application_hndl* app) {
+	vec2 pos;
+	int ww = 0, wh = 0;
+	glfwGetWindowSize(app->window.win, &ww, &wh);
+	pos.x = 2 * (app->gui.ctx->input.mouse.pos.x - ww / 2.f);
+	pos.y = 2 * (-app->gui.ctx->input.mouse.pos.y + wh / 2.f);
+	return pos;
+}
+
+vec2 getMousePos(application_hndl* app) {
+	vec2 pos;
+	pos.x = app->gui.ctx->input.mouse.pos.x;
+	pos.y = app->gui.ctx->input.mouse.pos.y;
+	return pos;
+}
+

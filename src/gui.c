@@ -1,6 +1,7 @@
 #define NK_IMPLEMENTATION
 #define NK_GLFW_GL3_IMPLEMENTATION
 #include "gui.h"
+#include <GLFW/glfw3.h>
 
 int gui_init(gui_hndl* gui, window_hndl* win) {
 	gui->ctx = nk_glfw3_init(&gui->glfw, win->win, NK_GLFW3_INSTALL_CALLBACKS);
@@ -12,4 +13,3 @@ int gui_init(gui_hndl* gui, window_hndl* win) {
 void gui_terminate(gui_hndl* gui) {
 	nk_glfw3_shutdown(&gui->glfw);
 }
-
