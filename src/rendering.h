@@ -9,6 +9,7 @@ typedef struct {
 	u64 size;
 	u64 maxsize;
 	u32* elementsPerFrame;
+	u32* verticesPerFrame;
 	u32 elementVal;
 	u32 samplesInxEnd;
 	u32 samplesMaxSize;
@@ -34,5 +35,6 @@ void rnBuffer_init(rnBuffer* buff, bool dynamic);
 void rnBuffer_terminate(rnBuffer* buff);
 void rnBuffer_alloc(rnBuffer* buff, u32 size); // Make sure that there is a place for at least "size" elements in the buffer
 void rnBuffer_render(rnBuffer* buff, shaderID shader, u32 frameID, u32 fps); // If frameID == 0 render all frames else fps is ignored
+void render_points(sample* samples, u32 sampleAmount, shaderID shader);
 
 #endif

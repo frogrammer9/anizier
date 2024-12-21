@@ -10,7 +10,8 @@
 typedef struct {
 	gui_hndl gui;
 	window_hndl window;
-	shaderID shader;
+	shaderID lineShader;
+	shaderID pointShader;
 	rnBuffer buffer;
 } application_hndl;
 

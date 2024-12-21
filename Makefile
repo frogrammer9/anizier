@@ -12,7 +12,7 @@ OBJECTS = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SOURCES))
 
 TARGET = anizier
 
-all: $(TARGET)
+all: clean $(TARGET)
 
 $(TARGET): clean $(OBJECTS)
 	@echo "Linking..."
@@ -30,7 +30,6 @@ clean:
 	rm -rf $(OBJDIR) $(TARGET)
 
 run: all
-	@clear
 	@./$(TARGET)
 	@echo "Program exited with code $$?"
 

@@ -5,10 +5,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <assert.h>
 
 #define DEBUG 0
 
 #define S2ES(size) ((size) ? (2 * (size - 1)) : (0)) //Calculates the amount of indexes based on the vertex count
+#define MIN(a, b) ((a < b) ? a : b)
+#define MAX(a, b) ((a > b) ? a : b)
 
 static u64 factorial(u64 in) {
 	static u64* cashe = NULL;
@@ -59,7 +62,7 @@ void generate_bezier_samples(controlPoint* cps, u32 count, u32 sampleAmount, sam
 void rnBuffer_init(rnBuffer* buff, bool dynamic) {
 	buff->VAO = 0; buff->VBO = 0; buff->EBO = 0;
 	buff->size = 0; buff->maxsize = 0;
-	buff->elementsPerFrame = NULL; buff->samplesInxEnd = 0; buff->samplesMaxSize = 64;
+	buff->elementsPerFrame = NULL; buff->verticesPerFrame = NULL; buff->samplesInxEnd = 0; buff->samplesMaxSize = 64;
 	buff->frameCount = 0;
 	buff->dynamic = dynamic;
 	buff->elementVal = 0;
@@ -84,9 +87,13 @@ void rnBuffer_init(rnBuffer* buff, bool dynamic) {
 	glBindVertexArray(0);
 
 	buff->elementsPerFrame = calloc(buff->samplesMaxSize, sizeof(u32));
+	buff->verticesPerFrame = calloc(buff->samplesMaxSize, sizeof(u32));
 }
 
 void rnBuffer_terminate(rnBuffer* buff) {
+	glDeleteBuffers(1, &buff->VBO);
+	glDeleteBuffers(1, &buff->EBO);
+	glDeleteVertexArrays(1, &buff->VAO);
 	free(buff->elementsPerFrame);
 }
 
@@ -130,8 +137,8 @@ u32 rnBuffer_add_curve(rnBuffer* buff, sample* samples, u32 sampleAmount) {
 	u32 curveID = buff->size;
 	glBufferSubData(GL_ARRAY_BUFFER, curveID * sizeof(sample), sampleAmount * sizeof(sample), samples);
 	buff->size += sampleAmount;
-	u32* elementBuff = malloc(S2ES(sampleAmount) * sizeof(u32));
-	for(u32 i = 0; i < sampleAmount - 1; ++i) { //PERF: This could be generated once and sampled (regenerated if a larger line draw request happens)
+	u32 elementBuff[S2ES(sampleAmount)];
+	for(u32 i = 0; i < sampleAmount - 1; ++i) {
 		elementBuff[2 * i] = buff->elementVal;
 		elementBuff[2 * i + 1] = ++buff->elementVal;
 	}
@@ -142,13 +149,24 @@ u32 rnBuffer_add_curve(rnBuffer* buff, sample* samples, u32 sampleAmount) {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	buff->elementsPerFrame[buff->samplesInxEnd] += S2ES(sampleAmount);
-	free(elementBuff);
+	buff->verticesPerFrame[buff->samplesInxEnd] += sampleAmount;
 	return curveID;
 }
 
 void rnBuffer_edit_curve(rnBuffer* buff, sample* samples, u32 sampleAmount, u32 curveID) {
+	u64 size = 0;
+	for(u32 i = 0; i < buff->frameCount; ++i) {
+		size += buff->verticesPerFrame[i];
+		if(size == curveID) {
+			size = buff->verticesPerFrame[i + 1];
+			break;
+		}
+	}
 	glBindBuffer(GL_ARRAY_BUFFER, buff->VBO);
-	glBufferSubData(GL_ARRAY_BUFFER, curveID * sizeof(sample), sampleAmount * sizeof(sample), samples);
+	if(size > sampleAmount) {
+		printf("Passing less samples then required to edit a curve\n");
+	}
+	glBufferSubData(GL_ARRAY_BUFFER, curveID * sizeof(sample), MIN(size, sampleAmount) * sizeof(sample), samples);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
@@ -156,6 +174,7 @@ u32 rnBuffer_new_frame(rnBuffer* buff) {
 	buff->samplesInxEnd++;
 	if(buff->samplesInxEnd == buff->samplesMaxSize) {
 		buff->elementsPerFrame = realloc(buff->elementsPerFrame, buff->samplesMaxSize * 2 * sizeof(u32));
+		buff->verticesPerFrame = realloc(buff->verticesPerFrame, buff->samplesMaxSize * 2 * sizeof(u32));
 		buff->samplesMaxSize *= 2;
 	}
 	return buff->samplesInxEnd;
@@ -205,5 +224,27 @@ void rnBuffer_render(rnBuffer* buff, shaderID shader, u32 frameID, u32 fps) {
 	}
 	printf("Rendering all frames is not implemented yet bcoz multithreading in C is scary\n");
 	//TODO: Implement rendering xd 
+}
+
+void render_points(sample* samples, u32 sampleAmount, shaderID shader) {
+	u32 vbo, vao;
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+	glGenBuffers(1, &vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sampleAmount * sizeof(sample), samples, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(sample), (void*)0); // vec2 position
+	glVertexAttribPointer(1, 1, GL_UNSIGNED_INT, GL_FALSE, sizeof(sample), (void*)(2 * sizeof(f32))); // u32 color
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+
+	shader_bind(shader);
+	glDrawArrays(GL_POINTS, 0, sampleAmount);
+	shader_bind(0);
+
+	glBindBuffer(GL_VERTEX_ARRAY, 0);
+	glBindVertexArray(0);
+
+	glDeleteBuffers(1, &vbo);
 }
 

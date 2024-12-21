@@ -14,7 +14,7 @@ out vec4 vCol;
 
 void main() {
 	vCol = calcColor(iCol);
-	gl_Position = vec4(iPos.x / uWinSize.x, iPos.y / uWinSize.y, 0.f, 1.f);
+	gl_Position = vec4(iPos.x / uWinSize.x * 2.f, iPos.y / uWinSize.y * 2.f, 0.f, 1.f);
 }
 
 #shader fragment 
