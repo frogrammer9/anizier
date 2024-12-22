@@ -3,6 +3,7 @@
 #include "gui.h"
 #include "rendering.h"
 #include "window.h"
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,16 +14,23 @@ void editor_run(application_hndl* app) {
 	new_frame(&anim);
 	u32 curveId = -1;
 	u32 frameId = 0;
+	controlPoint* editedPoint = NULL;
 	enum state  {
 		none,
 		adding_line_f,
 		adding_line_s,
+		moving_point,
 	};
 	enum state current_state = none;
 
 	while(running) {
 		switch(current_state) {
-			case none: break;
+			case none:
+				if(nk_input_is_mouse_pressed(&app->gui.ctx->input, NK_BUTTON_LEFT) && !nk_item_is_any_active(app->gui.ctx)) {
+					editedPoint = find_point_if_any(&anim.frames[frameId], getMousePosGL(app));
+					if(editedPoint) current_state = moving_point;
+				}
+			break;
 			case adding_line_f: {
 				if(nk_input_is_mouse_pressed(&app->gui.ctx->input, NK_BUTTON_LEFT) && !nk_item_is_any_active(app->gui.ctx)) {
 					vec2 mousePos = getMousePosGL(app);
@@ -39,7 +47,16 @@ void editor_run(application_hndl* app) {
 				}
 			}
 			break;
+			case moving_point: {
+				if(nk_input_is_mouse_released(&app->gui.ctx->input, NK_BUTTON_LEFT)) current_state = none;
+				vec2 mousePos = getMousePosGL(app);
+				editedPoint->point.x = mousePos.x;
+				editedPoint->point.y = mousePos.y;
+			}
+			 break;
 		}
+		if(app->gui.ctx->input.keyboard.text[app->gui.ctx->input.keyboard.text_len - 1] == '+') ++frameId;
+		if(app->gui.ctx->input.keyboard.text[app->gui.ctx->input.keyboard.text_len - 1] == '-') --frameId;
 
 		GUI_NEW_FRAME(app->gui);
 		if(nk_begin(app->gui.ctx, "Menu", nk_rect(50, 50, 300, 400), NK_WINDOW_BORDER | NK_WINDOW_TITLE | NK_WINDOW_MOVABLE)) {
@@ -49,13 +66,14 @@ void editor_run(application_hndl* app) {
 			if(nk_button_label(app->gui.ctx, "New line")) {
 				printf("Button pressed\n");
 				new_line(&anim.frames[frameId]);
-				++curveId;
+				curveId = anim.frames[frameId].size - 1;
 				current_state = adding_line_f;
 			}
 			nk_layout_row_static(app->gui.ctx, 60, 200, 1);
 			if(nk_button_label(app->gui.ctx, "New frame")) {
 				printf("Button pressed\n");
 				new_frame(&anim);
+				curveId = -1;
 				++frameId;
 			}
 			nk_layout_row_static(app->gui.ctx, 60, 200, 1);
@@ -112,7 +130,6 @@ void new_line(frame* f) {
 		f->curves = realloc(f->curves, f->maxsize * 2 * sizeof(bezierTemplate));
 		f->maxsize *= 2;
 	}
-	printf("Size: %u, Maxsize: %u\n", f->size, f->maxsize);
 	f->curves[f->size - 1].size = 0;
 	f->curves[f->size - 1].maxsize = 0;
 	f->curves[f->size - 1].points = NULL;
@@ -129,6 +146,21 @@ void add_point(bezierTemplate* curve, f32 xPos, f32 yPos) {
 	}
 	curve->points[curve->size - 1].point.x = xPos;
 	curve->points[curve->size - 1].point.y = yPos;
+}
+
+static u32 len(controlPoint cp, vec2 mp) {
+	i64 X = cp.point.x - mp.x;
+	i64 Y = cp.point.y - mp.y;
+	return sqrt(X * X + Y * Y);
+}
+
+controlPoint* find_point_if_any(frame* f, vec2 mPos) {
+	for(u32 i = 0; i < f->size; ++i) {
+		for(u32 j = 0; j < f->curves[i].size; ++j) {
+			if(len(f->curves[i].points[j], mPos) < 10.f) return &f->curves[i].points[j];
+		}
+	}
+	return NULL;
 }
 
 void render_cpoints(frame* f, u32 color, shaderID shader) {

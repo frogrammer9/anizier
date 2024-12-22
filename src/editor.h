@@ -27,5 +27,6 @@ void render_cpoints(frame* f, u32 color, shaderID shader);
 void new_frame(animation* anim);
 void new_line(frame* f);
 void add_point(bezierTemplate* curve, f32 xPos, f32 yPos);
+controlPoint* find_point_if_any(frame* f, vec2 mPos);
 
 #endif
