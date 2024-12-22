@@ -103,8 +103,8 @@ vec2 getMousePosGL(application_hndl* app) {
 	vec2 pos;
 	int ww = 0, wh = 0;
 	glfwGetWindowSize(app->window.win, &ww, &wh);
-	pos.x = 2 * (app->gui.ctx->input.mouse.pos.x - ww);
-	pos.y = 2 * (-app->gui.ctx->input.mouse.pos.y + wh);
+	pos.x = app->gui.ctx->input.mouse.pos.x - ww / 2.f;
+	pos.y = -app->gui.ctx->input.mouse.pos.y + wh / 2.f;
 	return pos;
 }
 

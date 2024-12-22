@@ -23,9 +23,9 @@ typedef struct {
 } animation;
 
 void editor_run(application_hndl* app);
-void render_cpoints(bezierTemplate* curve, shaderID shader);
+void render_cpoints(frame* f, u32 color, shaderID shader);
 void new_frame(animation* anim);
 void new_line(frame* f);
-void new_pdata(bezierTemplate* curve);
+void add_point(bezierTemplate* curve, f32 xPos, f32 yPos);
 
 #endif

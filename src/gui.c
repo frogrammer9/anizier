@@ -13,3 +13,12 @@ int gui_init(gui_hndl* gui, window_hndl* win) {
 void gui_terminate(gui_hndl* gui) {
 	nk_glfw3_shutdown(&gui->glfw);
 }
+
+void gui_text(gui_hndl* gui, cstr text) {
+    struct nk_command_buffer *canvas = nk_window_get_canvas(gui->ctx);
+    struct nk_rect rect = nk_rect(50, 50, 200, 30); 
+    struct nk_color text_color = nk_rgb(255, 255, 255); 
+    struct nk_color bg_color = nk_rgba(0, 0, 0, 0); 
+    const struct nk_user_font *font = gui->ctx->style.font;
+    nk_draw_text(canvas, rect, text, strlen(text), font, bg_color, text_color);
+}

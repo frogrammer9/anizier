@@ -2,6 +2,7 @@
 #define GUI_H
 
 #include <GL/glew.h>
+#include "altype.h"
 #include "window.h"
 #define NK_INCLUDE_FIXED_TYPES
 #define NK_INCLUDE_STANDARD_IO
@@ -28,5 +29,6 @@ typedef struct {
 int gui_init(gui_hndl* gui, window_hndl* win);
 void gui_terminate(gui_hndl* gui);
 void gui_render(gui_hndl* gui);
+void gui_text(gui_hndl* gui, cstr text);
 
 #endif
