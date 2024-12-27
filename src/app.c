@@ -32,7 +32,7 @@ int app_run(application_hndl* app) {
 	};
 
 	sample sam[] = {
-		{.pos = {.x = -150.f, .y = -200.f},	.col = 0xff0000ff},
+		{.pos = {.x = -150.f, .y = -200.f},	.col = 0x00ff00ff},
 		{.pos = {.x = 0.f, .y = 100.f},		.col = 0xff0000ff},
 		{.pos = {.x = 150.f, .y = -200.f},	.col = 0xff0000ff},
 	};

@@ -8,6 +8,7 @@
 #include <assert.h>
 
 #define DEBUG 0
+#define DEBUG_OVERLOAD true
 
 #define S2ES(size) ((size) ? (2 * (size - 1)) : (0)) //Calculates the amount of indexes based on the vertex count
 #define MIN(a, b) ((a < b) ? a : b)
@@ -30,12 +31,22 @@ static u64 factorial(u64 in) {
 	return cashe[in];
 }
 
+static u64 stupid_factorial(u64 in) {
+	u64 out = 1;
+	for(u64 i = 2; i <= in; ++i) out *= i;
+	return out;
+}
+
 static u64 binomialCoefficient(u64 n, u64 i) {
 	return factorial(n) / (factorial(i) * factorial(n - i));
 }
 
+static u64 stupid_binomialCoefficient(u64 n, u64 i) {
+	return stupid_factorial(n) / (stupid_factorial(i) * stupid_factorial(n - i));
+}
+
 static f64 bernsteinPolinomial(u64 n, u64 i, f32 t) {
-	return binomialCoefficient(n, i) * pow(1 - t, n - i) * pow(t, i);
+	return stupid_binomialCoefficient(n, i) * pow(1 - t, n - i) * pow(t, i);
 }
 
 void generate_bezier_samples(controlPoint* cps, u32 count, u32 sampleAmount, sample* samplesOUT) {
@@ -181,9 +192,9 @@ u32 rnBuffer_new_frame(rnBuffer* buff) {
 }
 
 void rnBuffer_render(rnBuffer* buff, shaderID shader, u32 frameID, u32 fps) {
-	#if DEBUG == 1
+	#if DEBUG > 0
 	static u32 lastframe;
-	if(frameID != lastframe) {
+	if(frameID != lastframe || DEBUG_OVERLOAD) {
 		sample* vBuff = malloc(buff->size * sizeof(sample));
 		u32* eBuff = malloc(S2ES(buff->size) * sizeof(u32));
 		GLsizei vBuffS = 0;

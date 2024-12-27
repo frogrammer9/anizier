@@ -20,6 +20,7 @@ void editor_run(application_hndl* app) {
 		adding_line_f,
 		adding_line_s,
 		moving_point,
+		adding_point,
 	};
 	enum state current_state = none;
 
@@ -53,7 +54,18 @@ void editor_run(application_hndl* app) {
 				editedPoint->point.x = mousePos.x;
 				editedPoint->point.y = mousePos.y;
 			}
-			 break;
+			break;
+			case adding_point:
+				if(nk_input_is_mouse_pressed(&app->gui.ctx->input, NK_BUTTON_LEFT) && !nk_item_is_any_active(app->gui.ctx)) {
+					vec2 mousePos = getMousePosGL(app);
+					add_point(&anim.frames[frameId].curves[curveId], mousePos.x, mousePos.y);
+					current_state = none;
+					bezierTemplate* curve = &anim.frames[frameId].curves[curveId];
+					controlPoint s = curve->points[curve->size-1];
+					curve->points[curve->size - 1] = curve->points[curve->size - 2];
+					curve->points[curve->size - 2] = s;
+				}
+			break;
 		}
 		if(app->gui.ctx->input.keyboard.text[app->gui.ctx->input.keyboard.text_len - 1] == '+') ++frameId;
 		if(app->gui.ctx->input.keyboard.text[app->gui.ctx->input.keyboard.text_len - 1] == '-') --frameId;
@@ -64,14 +76,16 @@ void editor_run(application_hndl* app) {
 			nk_labelf(app->gui.ctx, NK_TEXT_LEFT, "Current curve: %u", curveId);
 			nk_layout_row_static(app->gui.ctx, 60, 200, 1);
 			if(nk_button_label(app->gui.ctx, "New line")) {
-				printf("Button pressed\n");
 				new_line(&anim.frames[frameId]);
 				curveId = anim.frames[frameId].size - 1;
 				current_state = adding_line_f;
 			}
 			nk_layout_row_static(app->gui.ctx, 60, 200, 1);
+			if(nk_button_label(app->gui.ctx, "Add point to selected line")) {
+				current_state = adding_point;
+			}
+			nk_layout_row_static(app->gui.ctx, 60, 200, 1);
 			if(nk_button_label(app->gui.ctx, "New frame")) {
-				printf("Button pressed\n");
 				new_frame(&anim);
 				curveId = -1;
 				++frameId;
@@ -89,6 +103,17 @@ void editor_run(application_hndl* app) {
 		nk_end(app->gui.ctx);
 		GUI_RENDER(app->gui);
 
+		rnBuffer lineBuffer;
+		rnBuffer_init(&lineBuffer, false);
+		for(u32 i = 0; i < anim.frames[frameId].size; ++i) {
+			sample buffer[100];
+			generate_bezier_samples(anim.frames[frameId].curves[i].points, anim.frames[frameId].curves[i].size, 50, buffer);
+			rnBuffer_add_curve(&lineBuffer, buffer, 50);
+		}
+		u32 ftr = rnBuffer_new_frame(&lineBuffer);
+		rnBuffer_render(&lineBuffer, app->lineShader, ftr, 0);
+		rnBuffer_terminate(&lineBuffer);
+
 		render_cpoints(&anim.frames[frameId], 0xff0000ff, app->pointShader);
 
 		window_FEP(&app->window);
@@ -102,7 +127,6 @@ void editor_run(application_hndl* app) {
 		free(anim.frames[i].curves);
 	}
 	free(anim.frames);
-
 }
 
 void new_frame(animation* anim) {
@@ -146,6 +170,7 @@ void add_point(bezierTemplate* curve, f32 xPos, f32 yPos) {
 	}
 	curve->points[curve->size - 1].point.x = xPos;
 	curve->points[curve->size - 1].point.y = yPos;
+	curve->points[curve->size - 1].weight = 1.f;
 }
 
 static u32 len(controlPoint cp, vec2 mp) {
