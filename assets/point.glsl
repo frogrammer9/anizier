@@ -61,6 +61,10 @@ in vec4 fCol;
 in vec2 fCord;
 out vec4 color;
 
+vec4 calcColor(uint col) {
+	return vec4(float(col >> 24u) / 255.f, float((col >> 16u) & 0xFFu) / 255.f, float((col >> 8u) & 0xFFu) / 255.f, float(col & 0xFFu) / 255.f);
+}
+
 void main() {
 	if(length(fCord - vec2(.5f, .5f)) > .5f) discard;
 	color = fCol;

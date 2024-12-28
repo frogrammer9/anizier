@@ -8,11 +8,9 @@
 #include <assert.h>
 
 #define DEBUG 0
-#define DEBUG_OVERLOAD true
+#define DEBUG_OVERLOAD false
 
 #define S2ES(size) ((size) ? (2 * (size - 1)) : (0)) //Calculates the amount of indexes based on the vertex count
-#define MIN(a, b) ((a < b) ? a : b)
-#define MAX(a, b) ((a > b) ? a : b)
 
 static u64 factorial(u64 in) {
 	static u64* cashe = NULL;
@@ -25,9 +23,8 @@ static u64 factorial(u64 in) {
 	}
 	if(in < cashe_size) return cashe[in];
 	cashe = realloc(cashe, (in + 1) * sizeof(u64));
-	u64 old_cash_size = cashe_size;
+	for(u64 old_cash_size = cashe_size; old_cash_size <= in; ++old_cash_size) cashe[old_cash_size] = old_cash_size * cashe[old_cash_size - 1];
 	cashe_size = in + 1;
-	for(; old_cash_size <= in; ++old_cash_size) cashe[old_cash_size] = old_cash_size * cashe[old_cash_size - 1];
 	return cashe[in];
 }
 
@@ -46,7 +43,7 @@ static u64 stupid_binomialCoefficient(u64 n, u64 i) {
 }
 
 static f64 bernsteinPolinomial(u64 n, u64 i, f32 t) {
-	return stupid_binomialCoefficient(n, i) * pow(1 - t, n - i) * pow(t, i);
+	return binomialCoefficient(n, i) * pow(1 - t, n - i) * pow(t, i);
 }
 
 void generate_bezier_samples(controlPoint* cps, u32 count, u32 sampleAmount, sample* samplesOUT) {
@@ -89,7 +86,7 @@ void rnBuffer_init(rnBuffer* buff, bool dynamic) {
 	glBindBuffer(GL_ARRAY_BUFFER, buff->VBO);
 	glBufferData(GL_ARRAY_BUFFER, 0, NULL, (dynamic) ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(sample), (void*)0); // vec2 position
-	glVertexAttribPointer(1, 1, GL_UNSIGNED_INT, GL_FALSE, sizeof(sample), (void*)(2 * sizeof(f32))); // u32 color
+	glVertexAttribIPointer(1, 1, GL_UNSIGNED_INT, sizeof(sample), (void*)(2 * sizeof(f32))); // u32 color
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 
@@ -245,7 +242,7 @@ void render_points(sample* samples, u32 sampleAmount, shaderID shader) {
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, sampleAmount * sizeof(sample), samples, GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(sample), (void*)0); // vec2 position
-	glVertexAttribPointer(1, 1, GL_UNSIGNED_INT, GL_FALSE, sizeof(sample), (void*)(2 * sizeof(f32))); // u32 color
+	glVertexAttribIPointer(1, 1, GL_UNSIGNED_INT, sizeof(sample), (void*)(2 * sizeof(f32))); // u32 color
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 

@@ -26,19 +26,23 @@ int app_run(application_hndl* app) {
 	bool runEditor = false;
 
 	controlPoint cps[] = {
-		{.point = {.x = -150.f, .y = -200.f},	.weight = 1.f},
-		{.point = {.x = 0.f, .y = 100.f},		.weight = 1.f},
-		{.point = {.x = 150.f, .y = -200.f},	.weight = 1.f},
+		{.point = {.x = -150.f,	.y = -200.f},	.weight = 1.f},
+		{.point = {.x = 0.f,	.y = 100.f },	.weight = 1.f},
+		{.point = {.x = 150.f,	.y = -200.f},	.weight = 1.f},
 	};
 
 	sample sam[] = {
-		{.pos = {.x = -150.f, .y = -200.f},	.col = 0x00ff00ff},
-		{.pos = {.x = 0.f, .y = 100.f},		.col = 0xff0000ff},
-		{.pos = {.x = 150.f, .y = -200.f},	.col = 0xff0000ff},
+		{.pos = {.x = -150.f,	.y = -200.f},	.col = 0x19e023ff},
+		{.pos = {.x = 0.f,		.y = 100.f },	.col = 0x19e023ff},
+		{.pos = {.x = 150.f,	.y = -200.f},	.col = 0x19e023ff},
 	};
 
 	sample curve[100];
 	generate_bezier_samples(cps, 3, 50, curve);
+	rnBuffer_add_curve(&app->buffer, curve, 50);
+	generate_bezier_samples(cps, 2, 50, curve);
+	rnBuffer_add_curve(&app->buffer, curve, 50);
+	generate_bezier_samples(&cps[1], 2, 50, curve);
 	rnBuffer_add_curve(&app->buffer, curve, 50);
 	rnBuffer_new_frame(&app->buffer);
 	rnBuffer_add_curve(&app->buffer, sam, 3);
