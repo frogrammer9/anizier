@@ -9,10 +9,12 @@ void runner_run(application_hndl* app) {
 	animation anim = {.frames = NULL, .size = 0, .maxsize = 0};
 	u32 frameId = 0;
 	i64 last_time;
-	char file_name[256];
+	char file_name[256] = "";
 	char fps_select[64] = "24";
 	bool animation_running = false;
 	u32 fps_var = 0;
+	gui_hndl localgui;
+	gui_init(&localgui, &app->window);
 
 	while(running && !glfwWindowShouldClose(app->window.win)) {
 		if(labs(last_time - current_time_ms()) > (1.f / fps_var) * 1000 && animation_running) {
@@ -24,10 +26,10 @@ void runner_run(application_hndl* app) {
 			}
 		}
 
-		GUI_NEW_FRAME(app->gui);
-		if(nk_begin(app->gui.ctx, "Menu", nk_rect(50, 50, 300, 400), NK_WINDOW_BORDER | NK_WINDOW_TITLE | NK_WINDOW_MOVABLE)) {
-			nk_layout_row_static(app->gui.ctx, 60, 200, 1);
-			if(nk_button_label(app->gui.ctx, "Run animation")) {
+		GUI_NEW_FRAME(localgui);
+		if(nk_begin(localgui.ctx, "Menu", nk_rect(50, 50, 300, 400), NK_WINDOW_BORDER | NK_WINDOW_TITLE | NK_WINDOW_MOVABLE)) {
+			nk_layout_row_static(localgui.ctx, 60, 200, 1);
+			if(nk_button_label(localgui.ctx, "Run animation")) {
 				if(anim.size == 0) {
 					printf("No animation is loaded\n");
 				}
@@ -38,22 +40,22 @@ void runner_run(application_hndl* app) {
 					frameId = 0;
 				}
 			}
-			nk_layout_row_static(app->gui.ctx, 20, 200, 1);
-			nk_label(app->gui.ctx, "FPS:", NK_TEXT_LEFT);
-			nk_edit_string_zero_terminated(app->gui.ctx,NK_EDIT_FIELD, fps_select, sizeof(fps_select), nk_filter_decimal);
-			nk_layout_row_static(app->gui.ctx, 20, 200, 1);
-			nk_label(app->gui.ctx, "Filename:", NK_TEXT_LEFT);
-			nk_edit_string_zero_terminated(app->gui.ctx,NK_EDIT_FIELD, file_name, sizeof(file_name), nk_filter_ascii);
-			nk_layout_row_static(app->gui.ctx, 60, 200, 1);
-			if(nk_button_label(app->gui.ctx, "Load animation")) {
+			nk_layout_row_static(localgui.ctx, 20, 200, 1);
+			nk_label(localgui.ctx, "FPS:", NK_TEXT_LEFT);
+			nk_edit_string_zero_terminated(localgui.ctx,NK_EDIT_FIELD, fps_select, sizeof(fps_select), nk_filter_decimal);
+			nk_layout_row_static(localgui.ctx, 20, 200, 1);
+			nk_label(localgui.ctx, "Filename:", NK_TEXT_LEFT);
+			nk_edit_string_zero_terminated(localgui.ctx,NK_EDIT_FIELD, file_name, sizeof(file_name), nk_filter_ascii);
+			nk_layout_row_static(localgui.ctx, 60, 200, 1);
+			if(nk_button_label(localgui.ctx, "Load animation")) {
 				load_animation(&anim, file_name);
 			}
-			nk_layout_row_static(app->gui.ctx, 60, 200, 1);
-			if(nk_button_label(app->gui.ctx, "Back")) {
+			nk_layout_row_static(localgui.ctx, 60, 200, 1);
+			if(nk_button_label(localgui.ctx, "Back")) {
 				running = false;
 			}
-			nk_end(app->gui.ctx);
-			GUI_RENDER(app->gui);
+			nk_end(localgui.ctx);
+			GUI_RENDER(localgui);
 		}
 		if(animation_running) {
 			rnBuffer lineBuffer;
@@ -67,11 +69,9 @@ void runner_run(application_hndl* app) {
 			rnBuffer_render(&lineBuffer, app->lineShader, ftr, 0);
 			rnBuffer_terminate(&lineBuffer);
 		}
-
-
-			window_FEP(&app->window);
-			glClear(GL_COLOR_BUFFER_BIT);
-		}
+		window_FEP(&app->window);
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
 	for(u32 i = 0; i < anim.size; ++i) {
 		for(u32 j = 0; j < anim.frames[i].size; ++j) {
 			free(anim.frames[i].curves[j].points);
@@ -79,5 +79,6 @@ void runner_run(application_hndl* app) {
 		free(anim.frames[i].curves);
 	}
 	free(anim.frames);
+	gui_terminate(&localgui);
 }
 

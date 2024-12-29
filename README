@@ -1,6 +1,5 @@
 Program działa na linuxie(archu), powinien działać na kazdym POSIXIE, na Windowsie nie testowałem ale pewnie nie bedzie działać. Trzeba pobrać biblioteki z glfw i glew.  
 Żeby zbudowac program i go uruchomić `make run`  
-Jest problem że program po uruchomieniu od razu seqfaultuje, nie moge tego problemu wyłapać, trzeba włączać program w kółko aż w końcu sie odpali (nie moge tego problemu znaleść bo przy odpaleniu go gdb działa zawsze)  
 Wiem że jest ten program troche mało dopracowany i kod tymczasowy z dykty został zostawiony ale niestety przez ilość pracowni do zorobienia w okresie świątecznym nie pozwoliła mi dopracować tego programu  
 Załączam przykładową animacje "anizier.ani"  
 Pozdrawaim Oskar Meler

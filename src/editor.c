@@ -163,22 +163,27 @@ void editor_run(application_hndl* app) {
 				}
 				nk_layout_row_static(localgui.ctx, 60, 200, 1);
 				if(nk_button_label(localgui.ctx, "Create an interpolation")) {
-					memset(cbuffer, 0, sizeof(cbuffer));
-					cbuffer[0] = '1';
-					new_frame(&anim);
-					curveId = -1;
-					++frameId;
-					inter_state = interpolating;
-					anim.frames[frameId].size = anim.frames[frameId - 1].size;
-					anim.frames[frameId].maxsize = anim.frames[frameId - 1].maxsize;
-					anim.frames[frameId].curves = malloc(anim.frames[frameId].maxsize * sizeof(bezierTemplate));
-					for(u32 i = 0; i < anim.frames[frameId].size; ++i) {
-						anim.frames[frameId].curves[i].size = anim.frames[frameId - 1].curves[i].size;
-						anim.frames[frameId].curves[i].maxsize = anim.frames[frameId - 1].curves[i].maxsize;
-						anim.frames[frameId].curves[i].points = malloc(anim.frames[frameId].curves[i].maxsize * sizeof(controlPoint));
-						memcpy(	anim.frames[frameId].curves[i].points, 
-								anim.frames[frameId - 1].curves[i].points, 
-								anim.frames[frameId - 1].curves[i].size * sizeof(controlPoint));
+					if(anim.size - 1 != frameId) {
+						printf("Can create an interpolation only of the last frame\n");
+					}
+					else {
+						memset(cbuffer, 0, sizeof(cbuffer));
+						cbuffer[0] = '1';
+						new_frame(&anim);
+						curveId = -1;
+						++frameId;
+						inter_state = interpolating;
+						anim.frames[frameId].size = anim.frames[frameId - 1].size;
+						anim.frames[frameId].maxsize = anim.frames[frameId - 1].maxsize;
+						anim.frames[frameId].curves = malloc(anim.frames[frameId].maxsize * sizeof(bezierTemplate));
+						for(u32 i = 0; i < anim.frames[frameId].size; ++i) {
+							anim.frames[frameId].curves[i].size = anim.frames[frameId - 1].curves[i].size;
+							anim.frames[frameId].curves[i].maxsize = anim.frames[frameId - 1].curves[i].maxsize;
+							anim.frames[frameId].curves[i].points = malloc(anim.frames[frameId].curves[i].maxsize * sizeof(controlPoint));
+							memcpy(	anim.frames[frameId].curves[i].points, 
+									anim.frames[frameId - 1].curves[i].points, 
+									anim.frames[frameId - 1].curves[i].size * sizeof(controlPoint));
+						}
 					}
 				}
 				nk_layout_row_static(localgui.ctx, 60, 200, 1);
@@ -232,6 +237,7 @@ void editor_run(application_hndl* app) {
 		free(anim.frames[i].curves);
 	}
 	free(anim.frames);
+	gui_terminate(&localgui);
 }
 
 void new_frame(animation* anim) {

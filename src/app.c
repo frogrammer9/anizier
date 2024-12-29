@@ -50,7 +50,6 @@ int app_run(application_hndl* app) {
 	rnBuffer_new_frame(&app->buffer);
 
 	while(!glfwWindowShouldClose(app->window.win)) {
-		GUI_NEW_FRAME(app->gui);
 
 		glfwGetWindowSize(app->window.win, &WinSw, &WinSh);
 		shader_bind(app->lineShader);
@@ -63,6 +62,7 @@ int app_run(application_hndl* app) {
 		rnBuffer_render(&app->buffer, app->lineShader, 1, 0);
 		render_points(sam, 3, app->pointShader);
 
+		GUI_NEW_FRAME(app->gui);
 		if(nk_begin(app->gui.ctx, "Menu", nk_rect(50, 50, 300, 400), NK_WINDOW_BORDER | NK_WINDOW_TITLE | NK_WINDOW_MOVABLE)) {
 			nk_layout_row_static(app->gui.ctx, 60, 200, 1);
 			if(nk_button_label(app->gui.ctx, "Run editor")) {
@@ -83,10 +83,14 @@ int app_run(application_hndl* app) {
 
 		if(runEditor) {
 			runEditor = false;
+			window_FEP(&app->window);
+			glClear(GL_COLOR_BUFFER_BIT);
 			editor_run(app);
 		}
 		if(runRunner) {
 			runRunner= false;
+			window_FEP(&app->window);
+			glClear(GL_COLOR_BUFFER_BIT);
 			runner_run(app);
 		}
 
