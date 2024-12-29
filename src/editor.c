@@ -146,9 +146,11 @@ void editor_run(application_hndl* app) {
 					curveId = anim.frames[frameId].size - 1;
 					current_state = adding_line_f;
 				}
-				nk_layout_row_static(localgui.ctx, 60, 200, 1);
-				if(nk_button_label(localgui.ctx, "Add point to selected line")) {
-					current_state = adding_point;
+				if(curveId != -1) {
+					nk_layout_row_static(localgui.ctx, 60, 200, 1);
+					if(nk_button_label(localgui.ctx, "Add point to selected line")) {
+						current_state = adding_point;
+					}
 				}
 				if(editedPoint) {
 					nk_layout_row_static(localgui.ctx, 30, 200, 1);
@@ -377,6 +379,11 @@ void save_animation(animation* anim, cstr path) {
 }
 
 void load_animation(animation* anim, cstr path) {
+	FILE* file = fopen(path, "r");
+    if (!file) {
+        perror("Error opening file");
+        return;
+    }
 	for(u32 i = 0; i < anim->size; ++i) {
 		for(u32 j = 0; j < anim->frames[i].size; ++j) {
 			free(anim->frames[i].curves[j].points);
@@ -387,11 +394,6 @@ void load_animation(animation* anim, cstr path) {
 	anim->size = 0;
 	anim->maxsize = 0;
 	free(anim->frames);
-	FILE* file = fopen(path, "r");
-    if (!file) {
-        perror("Error opening file");
-        return;
-    }
    char line[1024]; 
 	while(fgets(line, sizeof(line), file)) {
 		if(strstr(line, "    [")) { new_line(&anim->frames[anim->size - 1]); }
