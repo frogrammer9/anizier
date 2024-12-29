@@ -33,22 +33,23 @@ out vec4 fCol;
 out vec2 fCord;
 
 uniform float pointSize;
+uniform vec2 uWinSize;
 
 void main() {
     vec4 center = gl_in[0].gl_Position;
     float halfSize = pointSize * 0.5;
 	fCol = gs_in[0].color;
 
-    gl_Position = center + vec4(-halfSize, -halfSize, 0.0, 0.0); // Bottom-left
+    gl_Position = center + vec4(-halfSize / uWinSize.x, -halfSize / uWinSize.y, 0.0, 0.0); // Bottom-left
 	fCord = vec2(0.f, 0.f);
     EmitVertex();
-    gl_Position = center + vec4(halfSize, -halfSize, 0.0, 0.0); // Bottom-right
+    gl_Position = center + vec4(halfSize / uWinSize.x, -halfSize / uWinSize.y, 0.0, 0.0); // Bottom-right
 	fCord = vec2(1.f, 0.f);
     EmitVertex();
-    gl_Position = center + vec4(-halfSize, halfSize, 0.0, 0.0); // Top-left
+    gl_Position = center + vec4(-halfSize / uWinSize.x, halfSize / uWinSize.y, 0.0, 0.0); // Top-left
 	fCord = vec2(0.f, 1.f);
     EmitVertex();
-    gl_Position = center + vec4(halfSize, halfSize, 0.0, 0.0); // Top-right
+    gl_Position = center + vec4(halfSize / uWinSize.x, halfSize / uWinSize.y, 0.0, 0.0); // Top-right
 	fCord = vec2(1.f, 1.f);
     EmitVertex();
     EndPrimitive(); 

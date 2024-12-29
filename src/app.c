@@ -31,7 +31,6 @@ int app_run(application_hndl* app) {
 		{.point = {.x = 0.f,	.y = 100.f },	.weight = 1.f},
 		{.point = {.x = 150.f,	.y = -200.f},	.weight = 1.f},
 	};
-
 	sample sam[] = {
 		{.pos = {.x = -150.f,	.y = -200.f},	.col = 0x19e023ff},
 		{.pos = {.x = 0.f,		.y = 100.f },	.col = 0x19e023ff},
@@ -39,12 +38,12 @@ int app_run(application_hndl* app) {
 	};
 
 	sample curve[100];
-	generate_bezier_samples(cps, 3, 50, curve);
-	rnBuffer_add_curve(&app->buffer, curve, 50);
-	generate_bezier_samples(cps, 2, 50, curve);
-	rnBuffer_add_curve(&app->buffer, curve, 50);
-	generate_bezier_samples(&cps[1], 2, 50, curve);
-	rnBuffer_add_curve(&app->buffer, curve, 50);
+	generate_bezier_samples(cps, 3, 100, curve);
+	rnBuffer_add_curve(&app->buffer, curve, 100);
+	generate_bezier_samples(cps, 2, 100, curve);
+	rnBuffer_add_curve(&app->buffer, curve, 100);
+	generate_bezier_samples(&cps[1], 2, 100, curve);
+	rnBuffer_add_curve(&app->buffer, curve, 100);
 	rnBuffer_new_frame(&app->buffer);
 	rnBuffer_add_curve(&app->buffer, sam, 3);
 	rnBuffer_new_frame(&app->buffer);
@@ -56,7 +55,7 @@ int app_run(application_hndl* app) {
 		glUniform2f(shaderWinSizeUloc, WinSw, WinSh);
 		shader_bind(app->pointShader);
 		glUniform2f(shaderWinSizeUloc, WinSw, WinSh);
-		glUniform1f(shaderPointSizeUloc, .05f);
+		glUniform1f(shaderPointSizeUloc, 60);
 		shader_bind(0);
 
 		rnBuffer_render(&app->buffer, app->lineShader, 1, 0);
