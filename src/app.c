@@ -4,8 +4,8 @@
 #include "window.h"
 #include "rendering.h"
 #include "editor.h"
+#include "runner.h"
 #include <GLFW/glfw3.h>
-#include <stdio.h>
 
 int shaderWinSizeUloc = 0;
 int shaderPointSizeUloc = 0;
@@ -24,6 +24,7 @@ int app_init(application_hndl* app) {
 int app_run(application_hndl* app) {
 	int WinSw, WinSh;
 	bool runEditor = false;
+	bool runRunner = false;
 
 	controlPoint cps[] = {
 		{.point = {.x = -150.f,	.y = -200.f},	.weight = 1.f},
@@ -64,16 +65,12 @@ int app_run(application_hndl* app) {
 		GUI_NEW_FRAME(app->gui);
 		if(nk_begin(app->gui.ctx, "Menu", nk_rect(50, 50, 300, 400), NK_WINDOW_BORDER | NK_WINDOW_TITLE | NK_WINDOW_MOVABLE)) {
 			nk_layout_row_static(app->gui.ctx, 60, 200, 1);
-			if(nk_button_label(app->gui.ctx, "New animation")) {
-				runEditor = true;
-			}
-			nk_layout_row_static(app->gui.ctx, 60, 200, 1);
-			if(nk_button_label(app->gui.ctx, "Edit animation")) {
+			if(nk_button_label(app->gui.ctx, "Run editor")) {
 				runEditor = true;
 			}
 			nk_layout_row_static(app->gui.ctx, 60, 200, 1);
 			if(nk_button_label(app->gui.ctx, "Run animation")) {
-				printf("Button pressed\n");
+				runRunner = true;
 			}
 			nk_layout_row_static(app->gui.ctx, 60, 200, 1);
 			if(nk_button_label(app->gui.ctx, "Exit")) {
@@ -87,6 +84,10 @@ int app_run(application_hndl* app) {
 		if(runEditor) {
 			runEditor = false;
 			editor_run(app);
+		}
+		if(runRunner) {
+			runRunner= false;
+			runner_run(app);
 		}
 
 		window_FEP(&app->window);
@@ -103,12 +104,12 @@ void app_terminate(application_hndl* app) {
 	window_terminate(&app->window);
 }
 
-vec2 getMousePosGL(application_hndl* app) {
+vec2 getMousePosGL(application_hndl* app, gui_hndl* gui) {
 	vec2 pos;
 	int ww = 0, wh = 0;
 	glfwGetWindowSize(app->window.win, &ww, &wh);
-	pos.x = app->gui.ctx->input.mouse.pos.x - ww / 2.f;
-	pos.y = -app->gui.ctx->input.mouse.pos.y + wh / 2.f;
+	pos.x = gui->ctx->input.mouse.pos.x - ww / 2.f;
+	pos.y = -gui->ctx->input.mouse.pos.y + wh / 2.f;
 	return pos;
 }
 

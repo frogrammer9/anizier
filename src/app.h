@@ -19,7 +19,7 @@ int app_init(application_hndl* app);
 int app_run(application_hndl* app);
 void app_terminate(application_hndl* app);
 
-vec2 getMousePosGL(application_hndl* app);
+vec2 getMousePosGL(application_hndl* app, gui_hndl* gui);
 vec2 getMousePos(application_hndl* app);
 
 #endif
