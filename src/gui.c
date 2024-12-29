@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 
 int gui_init(gui_hndl* gui, window_hndl* win) {
+	gui->glfw.text_len = 0;
 	gui->ctx = nk_glfw3_init(&gui->glfw, win->win, NK_GLFW3_INSTALL_CALLBACKS);
 	nk_glfw3_font_stash_begin(&gui->glfw, &gui->fatlas);
 	nk_glfw3_font_stash_end(&gui->glfw);
