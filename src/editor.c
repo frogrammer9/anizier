@@ -44,8 +44,10 @@ void editor_run(application_hndl* app) {
 	easing_func_ptr easing_funcs[] = {easing_linear, easing_sqare, easing_root, easing_s};
 	int easing_func_inx = 0;
 	i64 last_time;
-	char file_name[256];
+	char file_name[256] = "";
 	gui_hndl localgui;
+
+	
 	gui_init(&localgui, &app->window);
 
 	while(running && !glfwWindowShouldClose(app->window.win)) {
@@ -59,7 +61,7 @@ void editor_run(application_hndl* app) {
 			case adding_line_f: {
 				if(nk_input_is_mouse_pressed(&localgui.ctx->input, NK_BUTTON_LEFT) && !nk_item_is_any_active(localgui.ctx)) {
 					vec2 mousePos = getMousePosGL(app, &localgui);
-					add_point(&anim.frames[frameId].curves[curveId], mousePos.x, mousePos.y, 1);
+					editedPoint = add_point(&anim.frames[frameId].curves[curveId], mousePos.x, mousePos.y, 1);
 					current_state = adding_line_s;
 				}
 			}
@@ -67,7 +69,7 @@ void editor_run(application_hndl* app) {
 			case adding_line_s: {
 				if(nk_input_is_mouse_pressed(&localgui.ctx->input, NK_BUTTON_LEFT) && !nk_item_is_any_active(localgui.ctx)) {
 					vec2 mousePos = getMousePosGL(app, &localgui);
-					add_point(&anim.frames[frameId].curves[curveId], mousePos.x, mousePos.y, 1);
+					editedPoint = add_point(&anim.frames[frameId].curves[curveId], mousePos.x, mousePos.y, 1);
 					current_state = none;
 				}
 			}
@@ -82,7 +84,7 @@ void editor_run(application_hndl* app) {
 			case adding_point:
 				if(nk_input_is_mouse_pressed(&localgui.ctx->input, NK_BUTTON_LEFT) && !nk_item_is_any_active(localgui.ctx)) {
 					vec2 mousePos = getMousePosGL(app, &localgui);
-					add_point(&anim.frames[frameId].curves[curveId], mousePos.x, mousePos.y, 1);
+					editedPoint = add_point(&anim.frames[frameId].curves[curveId], mousePos.x, mousePos.y, 1);
 					current_state = none;
 					bezierTemplate* curve = &anim.frames[frameId].curves[curveId];
 					controlPoint s = curve->points[curve->size-1];
@@ -128,7 +130,7 @@ void editor_run(application_hndl* app) {
 				nk_layout_row_static(localgui.ctx, 20, 200, 1);
 				easing_func_inx = nk_combo(localgui.ctx, easing_func, sizeof(easing_func) / sizeof(char*), easing_func_inx, 30, nk_vec2(200, 200));
 				nk_layout_row_static(localgui.ctx, 60, 200, 1);
-				if(nk_button_label(localgui.ctx, "Interpolate")) {
+				if(nk_button_label(localgui.ctx, "Interpolate") && current_state == none) {
 					inter_state = none;
 					for(u32 i = 0; i < inter_framesAmount; ++i) {
 						new_frame(&anim);
@@ -141,14 +143,14 @@ void editor_run(application_hndl* app) {
 			}
 			else {
 				nk_layout_row_static(localgui.ctx, 60, 200, 1);
-				if(nk_button_label(localgui.ctx, "New line")) {
+				if(nk_button_label(localgui.ctx, "New line") && current_state == none) {
 					new_line(&anim.frames[frameId]);
 					curveId = anim.frames[frameId].size - 1;
 					current_state = adding_line_f;
 				}
 				if(curveId != -1) {
 					nk_layout_row_static(localgui.ctx, 60, 200, 1);
-					if(nk_button_label(localgui.ctx, "Add point to selected line")) {
+					if(nk_button_label(localgui.ctx, "Add point to selected line") && current_state == none) {
 						current_state = adding_point;
 					}
 				}
@@ -158,13 +160,13 @@ void editor_run(application_hndl* app) {
 					nk_slider_float(localgui.ctx, .01f, &editedPoint->weight, 10.f, .01f);
 				}
 				nk_layout_row_static(localgui.ctx, 60, 200, 1);
-				if(nk_button_label(localgui.ctx, "New frame")) {
+				if(nk_button_label(localgui.ctx, "New frame") && current_state == none) {
 					new_frame(&anim);
 					curveId = -1;
 					++frameId;
 				}
 				nk_layout_row_static(localgui.ctx, 60, 200, 1);
-				if(nk_button_label(localgui.ctx, "Create an interpolation")) {
+				if(nk_button_label(localgui.ctx, "Create an interpolation") && current_state == none) {
 					if(anim.size - 1 != frameId) {
 						printf("Can create an interpolation only of the last frame\n");
 					}
@@ -189,7 +191,7 @@ void editor_run(application_hndl* app) {
 					}
 				}
 				nk_layout_row_static(localgui.ctx, 60, 200, 1);
-				if(nk_button_label(localgui.ctx, "Run animation")) {
+				if(nk_button_label(localgui.ctx, "Run animation") && current_state == none) {
 					current_state = playing_animation;
 					last_time = current_time_ms();
 					frameId = 0;
@@ -198,10 +200,10 @@ void editor_run(application_hndl* app) {
 				nk_label(localgui.ctx, "Filename:", NK_TEXT_LEFT);
 				nk_edit_string_zero_terminated(localgui.ctx,NK_EDIT_FIELD, file_name, sizeof(file_name), nk_filter_ascii);
 				nk_layout_row_static(localgui.ctx, 60, 200, 1);
-				if(nk_button_label(localgui.ctx, "Save animation")) {
+				if(nk_button_label(localgui.ctx, "Save animation") && current_state == none) {
 					save_animation(&anim, file_name);
 				}
-				if(nk_button_label(localgui.ctx, "Load animation")) {
+				if(nk_button_label(localgui.ctx, "Load animation") && current_state == none) {
 					load_animation(&anim, file_name);
 				}
 			}
@@ -272,7 +274,7 @@ void new_line(frame* f) {
 	f->curves[f->size - 1].points = NULL;
 }
 
-void add_point(bezierTemplate* curve, f32 xPos, f32 yPos, f32 w) {
+controlPoint* add_point(bezierTemplate* curve, f32 xPos, f32 yPos, f32 w) {
 	if(curve->maxsize == 0) {
 		curve->points = malloc(2 * sizeof(controlPoint));
 		curve->maxsize = 2;
@@ -284,6 +286,7 @@ void add_point(bezierTemplate* curve, f32 xPos, f32 yPos, f32 w) {
 	curve->points[curve->size - 1].point.x = xPos;
 	curve->points[curve->size - 1].point.y = yPos;
 	curve->points[curve->size - 1].weight = w;
+	return &curve->points[curve->size - 1];
 }
 
 static u32 len(controlPoint cp, vec2 mp) {
@@ -295,7 +298,7 @@ static u32 len(controlPoint cp, vec2 mp) {
 controlPoint* find_point_if_any(frame* f, vec2 mPos, u32* curveId) {
 	for(u32 i = 0; i < f->size; ++i) {
 		for(u32 j = 0; j < f->curves[i].size; ++j) {
-			if(len(f->curves[i].points[j], mPos) < 10.f) {
+			if(len(f->curves[i].points[j], mPos) < 20.f) {
 				*curveId = i;
 				return &f->curves[i].points[j];
 			}
@@ -408,4 +411,5 @@ void load_animation(animation* anim, cstr path) {
         }
     }
     fclose(file);
+	printf("Loaded file: %s\n", path);
 }

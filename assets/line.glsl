@@ -16,7 +16,7 @@ out VS_OUT {
 
 void main() {
 	vs_out.color = calcColor(iCol);
-	gl_Position = vec4(iPos.x / uWinSize.x * 2.f, iPos.y / uWinSize.y * 2.f, 0.f, 1.f);
+	gl_Position = vec4(iPos.x * 2.f, iPos.y * 2.f, 0.f, 1.f);
 }
 
 #shader geometry
@@ -44,13 +44,13 @@ void main() {
     vec2 direction = normalize(vec2(p1.x - p0.x, p1.y - p0.y));
     vec2 perpendicular = vec2(-direction.y, direction.x);  // Perpendicular vector to the line
 
-    gl_Position = vec4(p0.x + perpendicular.x * lineWidth / uWinSize.x, p0.y + perpendicular.y * lineWidth / uWinSize.y, 0.f, 1.0); 
+    gl_Position = vec4((p0.x + perpendicular.x * lineWidth) / uWinSize.x, (p0.y + perpendicular.y * lineWidth) / uWinSize.y, 0.f, 1.0); 
     EmitVertex();
-    gl_Position = vec4(p0.x - perpendicular.x * lineWidth / uWinSize.x, p0.y - perpendicular.y * lineWidth / uWinSize.y, 0.f, 1.0); 
+    gl_Position = vec4((p0.x - perpendicular.x * lineWidth) / uWinSize.x, (p0.y - perpendicular.y * lineWidth) / uWinSize.y, 0.f, 1.0); 
     EmitVertex();
-    gl_Position = vec4(p1.x + perpendicular.x * lineWidth / uWinSize.x, p1.y + perpendicular.y * lineWidth / uWinSize.y, 0.f, 1.0); 
+    gl_Position = vec4((p1.x + perpendicular.x * lineWidth) / uWinSize.x, (p1.y + perpendicular.y * lineWidth) / uWinSize.y, 0.f, 1.0); 
     EmitVertex(); 
-    gl_Position = vec4(p1.x - perpendicular.x * lineWidth / uWinSize.x, p1.y - perpendicular.y * lineWidth / uWinSize.y, 0.f, 1.0); 
+    gl_Position = vec4((p1.x - perpendicular.x * lineWidth) / uWinSize.x, (p1.y - perpendicular.y * lineWidth) / uWinSize.y, 0.f, 1.0); 
     EmitVertex();  
 
     EndPrimitive();  

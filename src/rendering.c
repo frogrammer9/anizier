@@ -235,16 +235,30 @@ void rnBuffer_render(rnBuffer* buff, shaderID shader, u32 frameID, u32 fps) {
 }
 
 void render_points(sample* samples, u32 sampleAmount, shaderID shader) {
-	u32 vbo, vao;
-	glGenVertexArrays(1, &vao);
+	static u32 vbo = 0, vao = 0, vsize = 0;
+	if(!vbo && !vao) {
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+		glGenBuffers(1, &vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBufferData(GL_ARRAY_BUFFER, sampleAmount * sizeof(sample), samples, GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(sample), (void*)0); // vec2 position
+		glVertexAttribIPointer(1, 1, GL_UNSIGNED_INT, sizeof(sample), (void*)(2 * sizeof(f32))); // u32 color
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		vsize = sampleAmount;
+	}
+
 	glBindVertexArray(vao);
-	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sampleAmount * sizeof(sample), samples, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(sample), (void*)0); // vec2 position
-	glVertexAttribIPointer(1, 1, GL_UNSIGNED_INT, sizeof(sample), (void*)(2 * sizeof(f32))); // u32 color
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
+
+	if(sampleAmount > vsize) {
+		glBufferData(GL_ARRAY_BUFFER, sampleAmount * sizeof(sample), samples, GL_STATIC_DRAW);
+		vsize = sampleAmount;
+	}
+	else {
+		glBufferSubData(GL_ARRAY_BUFFER, 0, sampleAmount * sizeof(sample), samples);
+	}
 
 	shader_bind(shader);
 	glDrawArrays(GL_POINTS, 0, sampleAmount);
@@ -252,7 +266,5 @@ void render_points(sample* samples, u32 sampleAmount, shaderID shader) {
 
 	glBindBuffer(GL_VERTEX_ARRAY, 0);
 	glBindVertexArray(0);
-
-	glDeleteBuffers(1, &vbo);
 }
 
