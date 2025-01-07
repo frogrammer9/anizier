@@ -1,5 +1,8 @@
 Program działa na linuxie(archu), powinien działać na kazdym POSIXIE, na Windowsie nie testowałem ale pewnie nie bedzie działać. Trzeba pobrać biblioteki z glfw i glew.  
 Żeby zbudowac program i go uruchomić `make run`  
-Wiem że jest ten program troche mało dopracowany i kod tymczasowy z dykty został zostawiony ale niestety ilość pracowni do zorobienia w okresie świątecznym nie pozwoliła mi dopracować tego programu  
-Załączam przykładową animacje "anizier.ani"  
+Załączam przykładową animacje "anizier.ani" 
+Żeby przełączać się między klatkami klawisze '+' - następna klatka '-' - poprzednia klatka
+Przyciskiem "Add line" - dodaje linie przez utworzenie jej punktu końcowego i początkowego
+Można między klatkami interpolować w tym celu należy stworzyć klatke od jakiej chcemy zacząć i kliknąć "Create an interpolation"
+wtedy przesuwamy punkty w ich miejsca docelowa, wybieramy ilośc klatkech ile chcemyu by interpolacja zajęła i krztał jest funkcji wygładzającej.
 Pozdrawaim Oskar Meler
