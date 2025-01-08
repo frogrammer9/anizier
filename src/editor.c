@@ -84,12 +84,13 @@ void editor_run(application_hndl* app) {
 			case adding_point:
 				if(nk_input_is_mouse_pressed(&localgui.ctx->input, NK_BUTTON_LEFT) && !nk_item_is_any_active(localgui.ctx)) {
 					vec2 mousePos = getMousePosGL(app, &localgui);
-					editedPoint = add_point(&anim.frames[frameId].curves[curveId], mousePos.x, mousePos.y, 1);
+					add_point(&anim.frames[frameId].curves[curveId], mousePos.x, mousePos.y, 1);
 					current_state = none;
 					bezierTemplate* curve = &anim.frames[frameId].curves[curveId];
 					controlPoint s = curve->points[curve->size-1];
 					curve->points[curve->size - 1] = curve->points[curve->size - 2];
 					curve->points[curve->size - 2] = s;
+					editedPoint = &curve->points[curve->size - 2];
 				}
 			break;
 			case playing_animation:
@@ -144,6 +145,7 @@ void editor_run(application_hndl* app) {
 			else {
 				nk_layout_row_static(localgui.ctx, 60, 200, 1);
 				if(nk_button_label(localgui.ctx, "New line") && current_state == none) {
+					editedPoint = NULL;
 					new_line(&anim.frames[frameId]);
 					curveId = anim.frames[frameId].size - 1;
 					current_state = adding_line_f;
@@ -228,7 +230,7 @@ void editor_run(application_hndl* app) {
 		rnBuffer_terminate(&lineBuffer);
 
 		if(current_state != playing_animation)
-			render_cpoints(&anim.frames[frameId], 0x19e023ff, app->pointShader, curveId, 0xcc1dc3ff);
+			render_cpoints(&anim.frames[frameId], 0x19e023ff, app->pointShader, curveId, 0xcc1dc3ff, 0xabcdefff, editedPoint);
 
 		window_FEP(&app->window);
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -307,7 +309,7 @@ controlPoint* find_point_if_any(frame* f, vec2 mPos, u32* curveId) {
 	return NULL;
 }
 
-void render_cpoints(frame* f, u32 color, shaderID shader, u32 ccurve, u32 colorSelect) {
+void render_cpoints(frame* f, u32 color, shaderID shader, u32 ccurve, u32 colorSelect, u32 lineSelect, controlPoint* cpoint) {
 	u32 size = 0;
 	for(u32 i = 0; i < f->size; ++i) size += f->curves[i].size;
 	sample* samples = malloc(size * sizeof(sample));
@@ -316,7 +318,8 @@ void render_cpoints(frame* f, u32 color, shaderID shader, u32 ccurve, u32 colorS
 		for(u32 j = 0; j < f->curves[i].size; ++j) {
 			samples[inx].pos.x = f->curves[i].points[j].point.x;
 			samples[inx].pos.y = f->curves[i].points[j].point.y;
-			if(i == ccurve) samples[inx++].col = colorSelect;
+			if(&f->curves[i].points[j] == cpoint) samples[inx++].col = colorSelect;
+			else if(i == ccurve) samples[inx++].col = lineSelect;
 			else samples[inx++].col = color;
 		}
 	}
