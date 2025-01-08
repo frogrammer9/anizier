@@ -206,6 +206,7 @@ void editor_run(application_hndl* app) {
 					save_animation(&anim, file_name);
 				}
 				if(nk_button_label(localgui.ctx, "Load animation") && current_state == none) {
+					editedPoint = NULL;
 					load_animation(&anim, file_name);
 				}
 			}
